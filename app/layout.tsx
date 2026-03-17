@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Farm Command",
   description: "Daily farm snapshot - Grain, Weather, and Spray decisions",
+  icons: "/favicon.svg",
 };
 
 export default function RootLayout({
