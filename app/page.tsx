@@ -1,36 +1,44 @@
 import GrainCard from "@/components/GrainCard";
 import WeatherCard from "@/components/WeatherCard";
 import SprayCard from "@/components/SprayCard";
-import { GrainData, WeatherData, SprayData } from "@/lib/types";
+import { fetchGrainPrices } from "@/lib/grain";
+import { fetchCurrentWeather } from "@/lib/weather";
+import { fetchRainfall } from "@/lib/rainfall";
+import { calculateSprayDecision } from "@/lib/spray";
+import { config } from "@/lib/config";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-async function getGrainData(): Promise<GrainData> {
+async function getGrainData() {
   try {
-    const res = await fetch(`${API_URL}/api/grain`, {
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error("Failed to fetch grain");
-    return res.json();
+    return await fetchGrainPrices();
   } catch {
     return {
-      corn: { price: 0, change: 0, recommendation: "HOLD", reason: "Loading..." },
-      soybeans: { price: 0, change: 0, recommendation: "HOLD", reason: "Loading..." },
+      corn: { price: 0, change: 0, recommendation: "HOLD" as const, reason: "Loading..." },
+      soybeans: { price: 0, change: 0, recommendation: "HOLD" as const, reason: "Loading..." },
       updatedAt: new Date().toISOString(),
     };
   }
 }
 
-async function getWeatherData(): Promise<WeatherData> {
+async function getWeatherData() {
   try {
-    const res = await fetch(`${API_URL}/api/weather`, {
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error("Failed to fetch weather");
-    return res.json();
+    const [weather, rainfall] = await Promise.all([
+      fetchCurrentWeather(),
+      fetchRainfall(),
+    ]);
+    return {
+      locationLabel: config.weather.locationLabel,
+      rain12h: rainfall.rain12h,
+      rain24h: rainfall.rain24h,
+      rain72h: rainfall.rain72h,
+      windMph: weather.windMph,
+      gustMph: weather.gustMph,
+      tempF: weather.tempF,
+      isRainingNow: weather.isRainingNow,
+      updatedAt: new Date().toISOString(),
+    };
   } catch {
     return {
-      locationLabel: "Loading...",
+      locationLabel: config.weather.locationLabel,
       rain12h: 0,
       rain24h: 0,
       rain72h: 0,
@@ -43,20 +51,17 @@ async function getWeatherData(): Promise<WeatherData> {
   }
 }
 
-async function getSprayData(): Promise<SprayData> {
+async function getSprayData() {
   try {
-    const res = await fetch(`${API_URL}/api/spray`, {
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error("Failed to fetch spray");
-    return res.json();
+    const weather = await fetchCurrentWeather();
+    return calculateSprayDecision(weather);
   } catch {
     return {
-      status: "WAIT",
+      status: "WAIT" as const,
       reason: "Loading...",
       windMph: 0,
       gustMph: null,
-      thresholds: { maxWindMph: 10, maxGustMph: 15 },
+      thresholds: config.spray,
       updatedAt: new Date().toISOString(),
     };
   }
