@@ -72,7 +72,7 @@ export default async function Home() {
           new Date(weatherData.updatedAt).getTime(),
           new Date(sprayData.updatedAt).getTime()
         )
-      ).toLocaleString();
+      ).toLocaleString("en-US", { timeZone: "America/Chicago" });
 
   return (
     <main className="space-y-6">

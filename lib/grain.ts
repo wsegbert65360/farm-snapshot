@@ -7,6 +7,7 @@ interface YahooFinanceResponse {
       meta: {
         regularMarketPrice: number;
         previousClose: number;
+        regularMarketTime: number;
         symbol: string;
       };
     }>;
@@ -20,8 +21,9 @@ const SOYBEANS_SYMBOL = "ZS=F";
 async function fetchYahooQuote(symbol: string): Promise<{
   price: number;
   change: number;
+  reportDate: string;
 } | null> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
 
   try {
     const response = await fetch(url, {
@@ -47,7 +49,11 @@ async function fetchYahooQuote(symbol: string): Promise<{
       : price;
     const change = price - prevClose;
 
-    return { price, change };
+    const reportDate = result.meta.regularMarketTime 
+      ? new Date(result.meta.regularMarketTime * 1000).toISOString()
+      : new Date().toISOString();
+
+    return { price, change, reportDate };
   } catch (e) {
     console.log(`Yahoo fetch error:`, e);
     return null;
@@ -80,6 +86,8 @@ export async function fetchGrainPrices(): Promise<GrainData> {
     };
   }
 
+  const reportDate = cornData.reportDate;
+
   const cornRecommendation: "SELL" | "HOLD" = cornData.change <= sellThreshold ? "SELL" : "HOLD";
   const cornReason =
     cornRecommendation === "SELL"
@@ -109,6 +117,6 @@ export async function fetchGrainPrices(): Promise<GrainData> {
       recommendation: soybeansRecommendation,
       reason: soybeansReason,
     },
-    updatedAt: new Date().toISOString(),
+    updatedAt: reportDate,
   };
 }

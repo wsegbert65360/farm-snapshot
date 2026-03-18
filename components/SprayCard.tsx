@@ -30,6 +30,9 @@ export default function SprayCard({ data }: SprayCardProps) {
           <span>Max Gust: {data.thresholds.maxGustMph} mph</span>
         </div>
       </div>
+      <p className="text-xs text-slate-400 mt-4 pt-4 border-t border-slate-100">
+        Data: {new Date(data.updatedAt).toLocaleString("en-US", { timeZone: "America/Chicago" })}
+      </p>
     </div>
   );
 }
