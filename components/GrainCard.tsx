@@ -11,14 +11,14 @@ export default function GrainCard({ data }: GrainCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-slate-900">Grain</h2>
-        <span className="text-sm text-slate-400">
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-base font-semibold text-slate-900">Grain</h2>
+        <span className="text-xs text-slate-400">
           {new Date(data.updatedAt).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric", day: "numeric" })}
         </span>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         <CommodityRow
           name="CORN"
           price={data.corn.price}
@@ -26,7 +26,7 @@ export default function GrainCard({ data }: GrainCardProps) {
           recommendation={data.corn.recommendation}
           formatChange={formatChange}
         />
-        <div className="border-t border-slate-100 pt-3">
+        <div className="border-t border-slate-100 pt-2">
           <CommodityRow
             name="SOYBEANS"
             price={data.soybeans.price}

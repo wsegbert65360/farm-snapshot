@@ -9,16 +9,16 @@ export default function SprayCard({ data }: SprayCardProps) {
   const badgeClass = isGo ? "bg-green-500" : "bg-red-500";
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-slate-900">Spray</h2>
-        <span className="text-sm text-slate-400">
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-base font-semibold text-slate-900">Spray</h2>
+        <span className="text-xs text-slate-400">
           {new Date(data.updatedAt).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric", day: "numeric" })}
         </span>
       </div>
       <div className="flex items-center gap-4">
         <span
-          className={`flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold text-white ${badgeClass}`}
+          className={`flex items-center justify-center w-14 h-14 rounded-full text-xl font-bold text-white ${badgeClass}`}
         >
           {data.status}
         </span>

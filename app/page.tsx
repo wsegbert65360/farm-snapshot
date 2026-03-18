@@ -61,11 +61,11 @@ export default async function Home() {
 
   if (hasAnyError) {
     return (
-      <main className="space-y-3">
+      <main className="space-y-2">
         <GrainCard data={grainData} />
         <WeatherCard data={weatherData} />
         <SprayCard data={sprayData} />
-        <p className="text-center text-sm text-red-500">
+        <p className="text-center text-xs text-red-500">
           ⚠️ Check API connections
         </p>
       </main>
@@ -73,7 +73,7 @@ export default async function Home() {
   }
 
   return (
-    <main className="space-y-3">
+    <main className="space-y-2">
       <GrainCard data={grainData} />
       <WeatherCard data={weatherData} />
       <SprayCard data={sprayData} />
