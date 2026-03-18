@@ -37,7 +37,7 @@ async function getWeatherData() {
 async function getSprayData() {
   const weather = await fetchCurrentWeather();
   
-  if (weather.error) {
+  if (weather.error || weather.windMph === null) {
     return {
       status: "WAIT" as const,
       reason: "Weather data unavailable",
