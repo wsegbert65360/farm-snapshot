@@ -4,117 +4,66 @@
 - Single-page dashboard with Grain, Weather, Spray cards
 - Weather from NWS API (no API key)
 - Rainfall from existing rain-api.vercel.app
-- Mock grain data
+- Grain with fallback data (Yahoo Finance blocked by Vercel)
 - Spray GO/WAIT based on wind thresholds
+
+---
+
+## Phase 2: Grain Data Research Results
+
+### What Was Tested:
+1. **Yahoo Finance** - ❌ Blocked by Vercel (rate limiting)
+2. **USDA MyMarketNews** - Mostly PDF format, complex to parse
+3. **Free APIs** - All require API keys
+
+### USDA Findings:
+- Report 2932: Missouri Daily Grain Bids (PDF only)
+- Report 3420: Daily Market Rates (some TXT available)
+- Most data is PDF format - requires parsing
+- No simple JSON API without authentication
+
+### Options for Future:
+1. **DTN Test Key** - Free tier available (key: `oViXqthDGFNVw3IvAsnKrFG1AcfPyA6b`)
+2. **PDF Parsing** - Parse USDA PDF reports
+3. **Manual Updates** - Update fallback prices weekly
 
 ---
 
 ## Phase 2 Suggestions
 
-### 1. Real Grain Data
+### 1. Grain Data Solutions
 **Priority: High**
 
 Options:
-- **Yahoo Finance API** - Free, no key, futures data
-- **Tiingo** - Free tier with API key
-- **Alpha Vantage** - Free tier available
+- **Get API Key** - DTN, API Ninjas, or Commodities-API (free tiers available)
+- **PDF Parsing** - Parse USDA reports with library like `pdf-parse`
+- **Manual** - Accept static data, update periodically
 
-Files to modify:
-- `lib/grain.ts` - Replace mock with real API
-- Add API key to `.env`
-
-### 2. Per-Field Rainfall
+### 2. Advanced Spray Logic
 **Priority: Medium**
 
-The rainfall API already supports polygon queries. Need:
-- Field locations/polygons stored in config or database
-- UI to display multiple field rainfall totals
-- Modified `lib/rainfall.ts` to accept field parameters
+Add temperature/humidity rules and forecast windows
 
-### 3. Advanced Spray Logic
-**Priority: Medium**
-
-Current: Simple wind/gust thresholds
-
-Enhancements:
-- Temperature-based rules (too cold/hot)
-- Humidity considerations
-- Rain forecast windows (when will rain return?)
-- Multiple spray windows (24h, 48h forecast)
-
-Files to modify:
-- `lib/spray.ts` - Expand decision engine
-- `lib/types.ts` - Add forecast data types
-
-### 4. Bushels Sold Tracking
-**Priority: Medium**
-
-- Simple database (SQLite/PostgreSQL) to track:
-  - Total bushels sold
-  - Average price
-  - Contracts vs spot
-- Add UI to input sales
-
-### 5. Historical Data / Charts
+### 3. Error/Loading States
 **Priority: Low**
 
-- Price history charts
-- Rainfall history
-- Spray decision history
-
-Libraries to consider:
-- `recharts` - React charts
-- `chart.js`
-
-### 6. Notifications
-**Priority: Low**
-
-- Price alerts (when grain hits target)
-- Spray window alerts
-- Daily summary email
-
-Services:
-- SendGrid (emails)
-- Push notifications via Vercel Edge
+Add loading.tsx and error.tsx for better UX
 
 ---
 
-## Technical Debt / Improvements
+## Technical Debt
 
 | Issue | Fix |
 |-------|-----|
-| No error boundaries in UI | Add error.tsx and loading.tsx |
-| No TypeScript strict mode | Enable in tsconfig.json |
-| No unit tests | Add Jest or Vitest |
-| Hardcoded fallback values | Move to config |
+| No error boundaries | Add error.tsx and loading.tsx |
+| Hardcoded fallback | Move to config |
 
 ---
 
-## Suggested Phase 2 Order
-
-1. Real grain data (high value, low effort)
-2. Error/loading states (UX improvement)
-3. Per-field rainfall (uses existing API)
-4. Advanced spray logic
-5. Bushels tracking (requires DB)
-
----
-
-## Files to Review for Phase 2
+## Files for Phase 2
 
 | File | Purpose |
 |------|---------|
-| `lib/grain.ts` | Replace mock with real API |
+| `lib/grain.ts` | Add real API or PDF parsing |
 | `lib/spray.ts` | Expand decision logic |
-| `lib/rainfall.ts` | Add polygon support |
 | `app/page.tsx` | Add loading/error states |
-| `.env.example` | Add new config vars |
-
----
-
-## Questions Before Phase 2
-
-1. Which grain data source do you prefer?
-2. Do you want per-field rainfall tracking?
-3. What spray rules are most important to you?
-4. Need bushels sold tracking?

@@ -52,6 +52,7 @@ export async function fetchGrainPrices(): Promise<GrainData> {
 
   let cornData: { price: number; change: number } | null = null;
   let soybeansData: { price: number; change: number } | null = null;
+  let usingFallback = false;
 
   try {
     const [corn, soybeans] = await Promise.all([
@@ -62,10 +63,11 @@ export async function fetchGrainPrices(): Promise<GrainData> {
     soybeansData = soybeans;
   } catch (e) {
     console.error("Grain API error:", e);
+    usingFallback = true;
   }
 
-  const corn = cornData || { price: 4.82, change: 0.03 };
-  const soybeans = soybeansData || { price: 10.91, change: -0.02 };
+  const corn = cornData || { price: 4.65, change: 0.02 };
+  const soybeans = soybeansData || { price: 10.85, change: -0.03 };
 
   const cornRecommendation: "SELL" | "HOLD" = corn.change <= sellThreshold ? "SELL" : "HOLD";
   const cornReason =
@@ -88,13 +90,13 @@ export async function fetchGrainPrices(): Promise<GrainData> {
       price: corn.price,
       change: corn.change,
       recommendation: corn.price > 0 ? cornRecommendation : "HOLD",
-      reason: corn.price > 0 ? cornReason : "Using cached data",
+      reason: usingFallback ? "Fallback data (API unavailable)" : cornReason,
     },
     soybeans: {
       price: soybeans.price,
       change: soybeans.change,
       recommendation: soybeans.price > 0 ? soybeansRecommendation : "HOLD",
-      reason: soybeans.price > 0 ? soybeansReason : "Using cached data",
+      reason: usingFallback ? "Fallback data (API unavailable)" : soybeansReason,
     },
     updatedAt: new Date().toISOString(),
   };
