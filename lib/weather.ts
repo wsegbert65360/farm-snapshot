@@ -26,12 +26,17 @@ interface NWSObservation {
   };
 }
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> {
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 30000): Promise<Response> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
   try {
+    console.log(`NWS API: Fetching ${url}`);
     const response = await fetch(url, { ...options, signal: controller.signal });
+    console.log(`NWS API: Response status ${response.status}`);
     return response;
+  } catch (e) {
+    console.log(`NWS API: Fetch error ${e}`);
+    throw e;
   } finally {
     clearTimeout(id);
   }

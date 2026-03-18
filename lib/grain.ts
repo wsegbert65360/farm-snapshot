@@ -1,13 +1,12 @@
 import { config } from "./config";
 import { GrainData } from "./types";
 
-interface YahooQuoteResponse {
-  quoteSummary: {
+interface YahooFinanceResponse {
+  chart: {
     result: Array<{
-      price: {
+      meta: {
         regularMarketPrice: number;
-        regularMarketChange: number;
-        regularMarketChangePercent: number;
+        previousClose: number;
         symbol: string;
       };
     }>;
@@ -22,27 +21,33 @@ async function fetchYahooQuote(symbol: string): Promise<{
   price: number;
   change: number;
 } | null> {
-  const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=price`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
 
   try {
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/json",
       },
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.log(`Yahoo fetch failed: ${response.status}`);
+      return null;
+    }
 
-    const data = (await response.json()) as YahooQuoteResponse;
-    const result = data.quoteSummary?.result?.[0];
+    const data = (await response.json()) as YahooFinanceResponse;
+    const result = data.chart?.result?.[0];
 
-    if (!result?.price) return null;
+    if (!result?.meta) return null;
 
-    return {
-      price: result.price.regularMarketPrice,
-      change: result.price.regularMarketChange,
-    };
-  } catch {
+    const price = result.meta.regularMarketPrice;
+    const prevClose = result.meta.previousClose;
+    const change = price - prevClose;
+
+    return { price, change };
+  } catch (e) {
+    console.log(`Yahoo fetch error:`, e);
     return null;
   }
 }
