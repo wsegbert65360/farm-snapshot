@@ -7,6 +7,8 @@ import { fetchRainfall } from "@/lib/rainfall";
 import { calculateSprayDecision } from "@/lib/spray";
 import { config } from "@/lib/config";
 
+export const revalidate = 900;
+
 async function getGrainData() {
   const data = await fetchGrainPrices();
   return data;
