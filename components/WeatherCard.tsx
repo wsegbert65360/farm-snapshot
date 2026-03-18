@@ -13,15 +13,20 @@ export default function WeatherCard({ data }: WeatherCardProps) {
           {new Date(data.updatedAt).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric", day: "numeric" })}
         </span>
       </div>
-      <div className="grid grid-cols-3 gap-2 mb-2">
-        <RainColumn label="12h" value={data.rain12h} />
-        <RainColumn label="24h" value={data.rain24h} />
-        <RainColumn label="72h" value={data.rain72h} />
+      <div className="grid grid-cols-2 gap-3 mb-2">
+        <div className="text-center bg-blue-50 rounded-lg p-2">
+          <p className="text-xs text-slate-500">TEMP</p>
+          <p className="text-3xl font-bold text-blue-600">{data.tempF ? `${data.tempF}°` : "--"}</p>
+        </div>
+        <div className="grid grid-cols-3 gap-1">
+          <RainColumn label="12h" value={data.rain12h} />
+          <RainColumn label="24h" value={data.rain24h} />
+          <RainColumn label="72h" value={data.rain72h} />
+        </div>
       </div>
-      <div className="grid grid-cols-4 gap-1 text-sm">
+      <div className="grid grid-cols-3 gap-1 text-sm">
         <WeatherRow label="Wind" value={data.windMph > 0 ? `${data.windMph} mph` : "--"} />
         <WeatherRow label="Gusts" value={data.gustMph ? `${data.gustMph}` : "--"} />
-        <WeatherRow label="Temp" value={data.tempF ? `${data.tempF}°` : "--"} />
         <WeatherRow
           label="Rain"
           value={data.isRainingNow ? "Yes" : "No"}
@@ -35,8 +40,8 @@ export default function WeatherCard({ data }: WeatherCardProps) {
 function RainColumn({ label, value }: { label: string; value: number }) {
   return (
     <div className="text-center">
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="text-xl font-bold text-slate-900">{value.toFixed(2)}"</p>
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="text-base font-bold text-slate-900">{value.toFixed(2)}"</p>
     </div>
   );
 }
@@ -52,8 +57,8 @@ function WeatherRow({
 }) {
   return (
     <div className="text-center">
-      <span className="text-slate-400 text-sm">{label}</span>
-      <p className={`text-slate-900 font-medium ${valueClass}`}>{value}</p>
+      <span className="text-slate-400 text-xs">{label}</span>
+      <p className={`text-slate-900 font-medium text-sm ${valueClass}`}>{value}</p>
     </div>
   );
 }
