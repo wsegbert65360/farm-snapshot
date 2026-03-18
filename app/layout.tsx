@@ -4,7 +4,15 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Farm Command",
   description: "Daily farm snapshot - Grain, Weather, and Spray decisions",
-  icons: "/favicon.svg",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/app-icon.jpg", sizes: "180x180", type: "image/jpeg" },
+    ],
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
