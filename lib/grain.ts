@@ -50,53 +50,57 @@ async function fetchYahooQuote(symbol: string): Promise<{
 export async function fetchGrainPrices(): Promise<GrainData> {
   const { sellThreshold } = config.grain;
 
-  let cornData: { price: number; change: number } | null = null;
-  let soybeansData: { price: number; change: number } | null = null;
-  let usingFallback = false;
+  const [cornData, soybeansData] = await Promise.all([
+    fetchYahooQuote(CORN_SYMBOL),
+    fetchYahooQuote(SOYBEANS_SYMBOL),
+  ]);
 
-  try {
-    const [corn, soybeans] = await Promise.all([
-      fetchYahooQuote(CORN_SYMBOL),
-      fetchYahooQuote(SOYBEANS_SYMBOL),
-    ]);
-    cornData = corn;
-    soybeansData = soybeans;
-  } catch (e) {
-    console.error("Grain API error:", e);
-    usingFallback = true;
+  if (!cornData || !soybeansData) {
+    return {
+      corn: {
+        price: 0,
+        change: 0,
+        recommendation: "HOLD",
+        reason: "API unavailable - check connection",
+      },
+      soybeans: {
+        price: 0,
+        change: 0,
+        recommendation: "HOLD",
+        reason: "API unavailable - check connection",
+      },
+      updatedAt: new Date().toISOString(),
+    };
   }
 
-  const corn = cornData || { price: 4.65, change: 0.02 };
-  const soybeans = soybeansData || { price: 10.85, change: -0.03 };
-
-  const cornRecommendation: "SELL" | "HOLD" = corn.change <= sellThreshold ? "SELL" : "HOLD";
+  const cornRecommendation: "SELL" | "HOLD" = cornData.change <= sellThreshold ? "SELL" : "HOLD";
   const cornReason =
     cornRecommendation === "SELL"
-      ? `Price fell by ${Math.abs(corn.change).toFixed(2)} today`
-      : corn.change > 0
+      ? `Price fell by ${Math.abs(cornData.change).toFixed(2)} today`
+      : cornData.change > 0
       ? "Price improved today"
       : "Price stable today";
 
-  const soybeansRecommendation: "SELL" | "HOLD" = soybeans.change <= sellThreshold ? "SELL" : "HOLD";
+  const soybeansRecommendation: "SELL" | "HOLD" = soybeansData.change <= sellThreshold ? "SELL" : "HOLD";
   const soybeansReason =
     soybeansRecommendation === "SELL"
-      ? `Price fell by ${Math.abs(soybeans.change).toFixed(2)} today`
-      : soybeans.change > 0
+      ? `Price fell by ${Math.abs(soybeansData.change).toFixed(2)} today`
+      : soybeansData.change > 0
       ? "Price improved today"
       : "Price stable today";
 
   return {
     corn: {
-      price: corn.price,
-      change: corn.change,
-      recommendation: corn.price > 0 ? cornRecommendation : "HOLD",
-      reason: usingFallback ? "Fallback data (API unavailable)" : cornReason,
+      price: cornData.price,
+      change: cornData.change,
+      recommendation: cornRecommendation,
+      reason: cornReason,
     },
     soybeans: {
-      price: soybeans.price,
-      change: soybeans.change,
-      recommendation: soybeans.price > 0 ? soybeansRecommendation : "HOLD",
-      reason: usingFallback ? "Fallback data (API unavailable)" : soybeansReason,
+      price: soybeansData.price,
+      change: soybeansData.change,
+      recommendation: soybeansRecommendation,
+      reason: soybeansReason,
     },
     updatedAt: new Date().toISOString(),
   };

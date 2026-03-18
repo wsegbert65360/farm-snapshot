@@ -98,31 +98,32 @@ async function getCurrentObservation(stationUrl: string): Promise<{
 
 export async function fetchCurrentWeather(): Promise<{
   tempF: number | null;
-  windMph: number;
+  windMph: number | null;
   gustMph: number | null;
-  isRainingNow: boolean;
+  isRainingNow: boolean | null;
+  error?: string;
 }> {
   const { lat, lon } = config.weather;
 
   try {
     const gridPoint = await getGridPoint(lat, lon);
     if (!gridPoint) {
-      return { tempF: 62, windMph: 8, gustMph: 12, isRainingNow: false };
+      return { tempF: null, windMph: null, gustMph: null, isRainingNow: null, error: "Weather API unavailable" };
     }
 
     const stationUrl = await getNearestStation(gridPoint.stationsUrl);
     if (!stationUrl) {
-      return { tempF: 62, windMph: 8, gustMph: 12, isRainingNow: false };
+      return { tempF: null, windMph: null, gustMph: null, isRainingNow: null, error: "Weather API unavailable" };
     }
 
     const observation = await getCurrentObservation(stationUrl);
     if (!observation) {
-      return { tempF: 62, windMph: 8, gustMph: 12, isRainingNow: false };
+      return { tempF: null, windMph: null, gustMph: null, isRainingNow: null, error: "Weather API unavailable" };
     }
 
     return observation;
   } catch (e) {
     console.error("Weather API error:", e);
-    return { tempF: 62, windMph: 8, gustMph: 12, isRainingNow: false };
+    return { tempF: null, windMph: null, gustMph: null, isRainingNow: null, error: "Weather API unavailable" };
   }
 }

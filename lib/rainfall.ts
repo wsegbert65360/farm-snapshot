@@ -3,9 +3,10 @@ import { config } from "./config";
 import { RainfallResponse } from "./types";
 
 export async function fetchRainfall(): Promise<{
-  rain12h: number;
-  rain24h: number;
-  rain72h: number;
+  rain12h: number | null;
+  rain24h: number | null;
+  rain72h: number | null;
+  error?: string;
 }> {
   const { lat, lon, timezone } = config.weather;
   const url = `${config.rainfall.apiUrl}/api/rain?lat=${lat}&lon=${lon}&tz=${timezone}`;
@@ -23,9 +24,10 @@ export async function fetchRainfall(): Promise<{
   } catch (error) {
     console.error("Rainfall fetch error:", error);
     return {
-      rain12h: 0.15,
-      rain24h: 0.45,
-      rain72h: 1.2,
+      rain12h: null,
+      rain24h: null,
+      rain72h: null,
+      error: "Rainfall API unavailable",
     };
   }
 }
