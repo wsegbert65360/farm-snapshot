@@ -41,8 +41,8 @@ async function fetchYahooQuote(symbol: string): Promise<{
 
     if (!result?.meta) return null;
 
-    const price = result.meta.regularMarketPrice;
-    const prevClose = result.meta.previousClose;
+    const price = result.meta.regularMarketPrice / 100;
+    const prevClose = result.meta.previousClose / 100;
     const change = price - prevClose;
 
     return { price, change };
