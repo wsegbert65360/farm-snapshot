@@ -49,9 +49,10 @@ export async function fetchCurrentWeather(): Promise<{
     const isRainingNow = current.precipitation > 0;
 
     let gustMph: number | null = null;
-    if (data.hourly && data.hourly.wind_speed_10m) {
-      const maxWind = Math.max(...data.hourly.wind_speed_10m.slice(0, 24));
-      gustMph = Math.round(maxWind * 0.621371);
+    const hourlyWind = data.hourly?.wind_speed_10m;
+    if (hourlyWind && hourlyWind.length > 0) {
+      const maxWindToday = Math.max(...hourlyWind.slice(0, 24));
+      gustMph = Math.round(maxWindToday * 0.621371);
     }
 
     return { tempF, windMph, gustMph, isRainingNow };
