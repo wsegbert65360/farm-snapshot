@@ -1,0 +1,17 @@
+{
+  "name": "Farm Command",
+  "short_name": "FarmCmd",
+  "description": "Daily farm snapshot - Grain, Weather, and Spray decisions",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#22c55e",
+  "icons": [
+    {
+      "src": "/app-icon.jpg",
+      "sizes": "180x180",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
