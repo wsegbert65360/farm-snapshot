@@ -5,6 +5,7 @@ interface OpenMeteoResponse {
     temperature_2m: number;
     precipitation: number;
     wind_speed_10m: number;
+    wind_gusts_10m: number;
   };
   hourly?: {
     precipitation_probability: number[];
@@ -23,7 +24,7 @@ export async function fetchCurrentWeather(): Promise<{
 }> {
   const { lat, lon } = config.weather;
   
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,wind_speed_10m&hourly=precipitation_probability,precipitation,wind_speed_10m`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,wind_speed_10m,wind_gusts_10m&hourly=precipitation_probability,precipitation,wind_speed_10m`;
 
   try {
     const response = await fetch(url, {
@@ -47,14 +48,12 @@ export async function fetchCurrentWeather(): Promise<{
       ? Math.round(current.wind_speed_10m * 0.621371)
       : null;
 
-    const isRainingNow = current.precipitation > 0;
-
     let gustMph: number | null = null;
-    const hourlyWind = data.hourly?.wind_speed_10m;
-    if (hourlyWind && hourlyWind.length > 0) {
-      const maxWindToday = Math.max(...hourlyWind.slice(0, 24));
-      gustMph = Math.round(maxWindToday * 0.621371);
+    if (current.wind_gusts_10m !== null) {
+      gustMph = Math.round(current.wind_gusts_10m * 0.621371);
     }
+
+    const isRainingNow = current.precipitation > 0;
 
     let rainPredicted: boolean | null = null;
     const hourlyPrecip = data.hourly?.precipitation_probability;
