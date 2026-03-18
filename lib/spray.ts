@@ -13,7 +13,7 @@ export function calculateSprayDecision(weather: {
   isRainingNow: boolean;
   rainPredicted: boolean | null;
 }): SprayData {
-  const { maxWindMph, maxGustMph, rainForecastHours } = config.spray;
+  const { maxWindMph, maxGustMph } = config.spray;
 
   if (weather.isRainingNow) {
     return {
