@@ -20,6 +20,7 @@ export interface WeatherData {
   gustMph: number | null;
   tempF: number | null;
   isRainingNow: boolean;
+  rainPredicted?: boolean;
   error?: string;
   updatedAt: string;
 }

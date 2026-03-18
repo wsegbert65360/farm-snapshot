@@ -25,6 +25,7 @@ async function getWeatherData(weather: WeatherData) {
     gustMph: weather.gustMph,
     tempF: weather.tempF,
     isRainingNow: weather.isRainingNow ?? false,
+    rainPredicted: weather.rainPredicted ?? false,
     error: hasError ? "Data unavailable" : undefined,
     updatedAt: new Date().toISOString(),
   };

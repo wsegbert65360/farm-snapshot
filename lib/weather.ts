@@ -58,8 +58,10 @@ export async function fetchCurrentWeather(): Promise<{
 
     let rainPredicted: boolean | null = null;
     const hourlyPrecip = data.hourly?.precipitation_probability;
+    const forecastHours = config.spray.rainForecastHours;
+    const rainThreshold = config.spray.rainThreshold;
     if (hourlyPrecip && hourlyPrecip.length > 0) {
-      rainPredicted = hourlyPrecip.slice(0, 3).some(p => p > 20);
+      rainPredicted = hourlyPrecip.slice(0, forecastHours).some(p => p > rainThreshold);
     }
 
     return { tempF, windMph, gustMph, isRainingNow, rainPredicted };
