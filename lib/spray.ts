@@ -5,6 +5,7 @@ export function calculateSprayDecision(weather: {
   windMph: number;
   gustMph: number | null;
   isRainingNow: boolean;
+  rainPredicted: boolean | null;
 }): SprayData {
   const { maxWindMph, maxGustMph } = config.spray;
 
@@ -12,6 +13,17 @@ export function calculateSprayDecision(weather: {
     return {
       status: "WAIT",
       reason: "Rain detected",
+      windMph: weather.windMph,
+      gustMph: weather.gustMph,
+      thresholds: { maxWindMph, maxGustMph },
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  if (weather.rainPredicted) {
+    return {
+      status: "WAIT",
+      reason: "Rain expected within 3 hours",
       windMph: weather.windMph,
       gustMph: weather.gustMph,
       thresholds: { maxWindMph, maxGustMph },

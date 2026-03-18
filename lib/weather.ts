@@ -18,6 +18,7 @@ export async function fetchCurrentWeather(): Promise<{
   windMph: number | null;
   gustMph: number | null;
   isRainingNow: boolean | null;
+  rainPredicted: boolean | null;
   error?: string;
 }> {
   const { lat, lon } = config.weather;
@@ -32,7 +33,7 @@ export async function fetchCurrentWeather(): Promise<{
     });
 
     if (!response.ok) {
-      return { tempF: null, windMph: null, gustMph: null, isRainingNow: null, error: "Weather API unavailable" };
+      return { tempF: null, windMph: null, gustMph: null, isRainingNow: null, rainPredicted: null, error: "Weather API unavailable" };
     }
 
     const data = (await response.json()) as OpenMeteoResponse;
@@ -55,9 +56,15 @@ export async function fetchCurrentWeather(): Promise<{
       gustMph = Math.round(maxWindToday * 0.621371);
     }
 
-    return { tempF, windMph, gustMph, isRainingNow };
+    let rainPredicted: boolean | null = null;
+    const hourlyPrecip = data.hourly?.precipitation_probability;
+    if (hourlyPrecip && hourlyPrecip.length > 0) {
+      rainPredicted = hourlyPrecip.slice(0, 3).some(p => p > 20);
+    }
+
+    return { tempF, windMph, gustMph, isRainingNow, rainPredicted };
   } catch (e) {
     console.error("Weather API error:", e);
-    return { tempF: null, windMph: null, gustMph: null, isRainingNow: null, error: "Weather API unavailable" };
+    return { tempF: null, windMph: null, gustMph: null, isRainingNow: null, rainPredicted: null, error: "Weather API unavailable" };
   }
 }
