@@ -59,24 +59,24 @@ export default async function Home() {
                       weatherData.error || 
                       sprayData.reason.includes("unavailable");
 
-  const lastUpdated = hasAnyError 
-    ? "Error - data unavailable" 
-    : new Date(
-        Math.max(
-          new Date(grainData.updatedAt).getTime(),
-          new Date(weatherData.updatedAt).getTime(),
-          new Date(sprayData.updatedAt).getTime()
-        )
-      ).toLocaleString("en-US", { timeZone: "America/Chicago" });
+  if (hasAnyError) {
+    return (
+      <main className="space-y-2">
+        <GrainCard data={grainData} />
+        <WeatherCard data={weatherData} />
+        <SprayCard data={sprayData} />
+        <p className="text-center text-xs text-red-500">
+          ⚠️ Check API connections
+        </p>
+      </main>
+    );
+  }
 
   return (
-    <main className="space-y-6">
+    <main className="space-y-2">
       <GrainCard data={grainData} />
       <WeatherCard data={weatherData} />
       <SprayCard data={sprayData} />
-      <p className={`text-center text-sm ${hasAnyError ? "text-red-500" : "text-slate-400"}`}>
-        {hasAnyError ? "⚠️ Some data unavailable - check API connections" : `Last updated: ${lastUpdated}`}
-      </p>
     </main>
   );
 }

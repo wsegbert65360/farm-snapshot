@@ -9,30 +9,26 @@ export default function SprayCard({ data }: SprayCardProps) {
   const badgeClass = isGo ? "bg-green-500" : "bg-red-500";
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-      <h2 className="text-lg font-semibold text-slate-900 mb-4">Spray Decision</h2>
-      <div className="flex items-center gap-4 mb-4">
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-base font-semibold text-slate-900">Spray</h2>
+        <span className="text-xs text-slate-400">
+          {new Date(data.updatedAt).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric", day: "numeric" })}
+        </span>
+      </div>
+      <div className="flex items-center gap-3">
         <span
-          className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-3xl font-bold text-white ${badgeClass}`}
+          className={`flex items-center justify-center w-12 h-12 rounded-full text-lg font-bold text-white ${badgeClass}`}
         >
           {data.status}
         </span>
-        <div>
-          <p className="text-slate-900 font-medium">{data.reason}</p>
-          <p className="text-sm text-slate-500 mt-1">
-            Wind: {data.windMph} mph {data.gustMph ? `| Gusts: ${data.gustMph} mph` : ""}
+        <div className="flex-1">
+          <p className="text-sm text-slate-900 font-medium">{data.reason}</p>
+          <p className="text-xs text-slate-500">
+            Wind: {data.windMph} mph {data.gustMph ? `| Gusts: ${data.gustMph}` : ""}
           </p>
         </div>
       </div>
-      <div className="border-t border-slate-100 pt-4 text-sm">
-        <div className="flex justify-between text-slate-500">
-          <span>Max Wind: {data.thresholds.maxWindMph} mph</span>
-          <span>Max Gust: {data.thresholds.maxGustMph} mph</span>
-        </div>
-      </div>
-      <p className="text-xs text-slate-400 mt-4 pt-4 border-t border-slate-100">
-        Data: {new Date(data.updatedAt).toLocaleString("en-US", { timeZone: "America/Chicago" })}
-      </p>
     </div>
   );
 }

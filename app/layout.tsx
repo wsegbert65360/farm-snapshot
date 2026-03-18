@@ -23,11 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-slate-50">
-        <div className="max-w-2xl mx-auto px-4 py-8">
-          <header className="mb-8">
-            <h1 className="text-3xl font-bold text-slate-900">Farm Command</h1>
-            <p className="text-slate-600 mt-1">Daily Farm Snapshot</p>
-          </header>
+        <div className="max-w-2xl mx-auto px-2 py-2">
           {children}
         </div>
       </body>
