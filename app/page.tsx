@@ -9,16 +9,10 @@ import { config } from "@/lib/config";
 
 export const revalidate = 900;
 
-async function getGrainData() {
-  const data = await fetchGrainPrices();
-  return data;
-}
+type WeatherData = Awaited<ReturnType<typeof fetchCurrentWeather>>;
 
-async function getWeatherData() {
-  const [weather, rainfall] = await Promise.all([
-    fetchCurrentWeather(),
-    fetchRainfall(),
-  ]);
+async function getWeatherData(weather: WeatherData) {
+  const rainfall = await fetchRainfall();
   
   const hasError = weather.error || rainfall.error;
   
@@ -36,9 +30,7 @@ async function getWeatherData() {
   };
 }
 
-async function getSprayData() {
-  const weather = await fetchCurrentWeather();
-  
+function getSprayData(weather: WeatherData) {
   if (weather.error || weather.windMph === null) {
     return {
       status: "WAIT" as const,
@@ -54,10 +46,12 @@ async function getSprayData() {
 }
 
 export default async function Home() {
+  const weather = await fetchCurrentWeather();
+  
   const [grainData, weatherData, sprayData] = await Promise.all([
-    getGrainData(),
-    getWeatherData(),
-    getSprayData(),
+    fetchGrainPrices(),
+    getWeatherData(weather),
+    Promise.resolve(getSprayData(weather)),
   ]);
 
   const hasAnyError = grainData.corn.reason.includes("unavailable") || 
