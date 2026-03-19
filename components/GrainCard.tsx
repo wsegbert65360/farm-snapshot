@@ -41,9 +41,10 @@ interface CommodityRowProps {
 }
 
 function CommodityRow({ name, price, change, recommendation }: CommodityRowProps) {
-  const isUp = change >= 0;
-  const changeColor = isUp ? "text-green-500" : "text-red-500";
-  const changeBg = isUp ? "bg-green-100" : "bg-red-100";
+  const isUp = change > 0;
+  const isDown = change < 0;
+  const changeColor = isUp ? "text-green-500" : isDown ? "text-red-500" : "text-slate-500";
+  const changeBg = isUp ? "bg-green-100" : isDown ? "bg-red-100" : "bg-slate-100";
   const formatChange = isUp ? `+${change.toFixed(2)}` : change.toFixed(2);
 
   return (

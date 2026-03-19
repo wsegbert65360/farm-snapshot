@@ -40,17 +40,16 @@ async function fetchYahooQuote(symbol: string): Promise<{
 
     const data = (await response.json()) as YahooFinanceResponse;
     const result = data.chart?.result?.[0];
+    const meta = result?.meta;
 
-    if (!result?.meta) return null;
+    if (!meta || !meta.regularMarketPrice) return null;
 
-    const price = result.meta.regularMarketPrice / 100;
-    const prevClose = result.meta.previousClose 
-      ? result.meta.previousClose / 100 
-      : price;
+    const price = meta.regularMarketPrice / 100;
+    const prevClose = meta.previousClose ? meta.previousClose / 100 : price;
     const change = price - prevClose;
 
-    const reportDate = result.meta.regularMarketTime 
-      ? new Date(result.meta.regularMarketTime * 1000).toISOString()
+    const reportDate = meta.regularMarketTime 
+      ? new Date(meta.regularMarketTime * 1000).toISOString()
       : new Date().toISOString();
 
     return { price, change, reportDate };
