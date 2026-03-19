@@ -5,11 +5,6 @@ interface GrainCardProps {
 }
 
 export default function GrainCard({ data }: GrainCardProps) {
-  const formatChange = (change: number) => {
-    const sign = change >= 0 ? "+" : "";
-    return `${sign}${change.toFixed(2)}`;
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
       <div className="flex items-center justify-between mb-2">
@@ -24,7 +19,6 @@ export default function GrainCard({ data }: GrainCardProps) {
           price={data.corn.price}
           change={data.corn.change}
           recommendation={data.corn.recommendation}
-          formatChange={formatChange}
         />
         <div className="border-t border-slate-100 pt-2">
           <CommodityRow
@@ -32,7 +26,6 @@ export default function GrainCard({ data }: GrainCardProps) {
             price={data.soybeans.price}
             change={data.soybeans.change}
             recommendation={data.soybeans.recommendation}
-            formatChange={formatChange}
           />
         </div>
       </div>
@@ -45,24 +38,28 @@ interface CommodityRowProps {
   price: number;
   change: number;
   recommendation: "SELL" | "HOLD";
-  formatChange: (change: number) => string;
 }
 
-function CommodityRow({ name, price, change, recommendation, formatChange }: CommodityRowProps) {
-  const badgeClass = recommendation === "SELL" ? "bg-orange-500" : "bg-green-500";
+function CommodityRow({ name, price, change, recommendation }: CommodityRowProps) {
+  const isUp = change >= 0;
+  const changeColor = isUp ? "text-green-500" : "text-red-500";
+  const changeBg = isUp ? "bg-green-100" : "bg-red-100";
+  const formatChange = isUp ? `+${change.toFixed(2)}` : change.toFixed(2);
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <span className="font-medium text-slate-700 text-base">{name}</span>
-        <span className={`px-2 py-1 rounded text-white text-sm font-medium ${badgeClass}`}>
+        <span className={`px-1.5 py-0.5 rounded text-xs font-medium text-white ${recommendation === "SELL" ? "bg-orange-500" : "bg-green-500"}`}>
           {recommendation}
         </span>
       </div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-xl font-bold text-slate-900">${price.toFixed(2)}</span>
-        <span className={`text-sm ${change >= 0 ? "text-green-600" : "text-red-600"}`}>
-          {formatChange(change)}
+      <div className={`flex items-center gap-2 px-2 py-1 rounded-lg ${changeBg}`}>
+        <span className={`text-2xl font-bold ${changeColor}`}>
+          {formatChange}
+        </span>
+        <span className="text-sm text-slate-500">
+          ${price.toFixed(2)}
         </span>
       </div>
     </div>
