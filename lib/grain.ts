@@ -1,20 +1,6 @@
 import { config } from "./config";
 import { GrainData } from "./types";
 
-interface YahooFinanceResponse {
-  chart: {
-    result: Array<{
-      meta: {
-        regularMarketPrice: number;
-        previousClose: number;
-        regularMarketTime: number;
-        symbol: string;
-      };
-    }>;
-    error: null | string;
-  };
-}
-
 const CORN_SYMBOL = "ZC=F";
 const SOYBEANS_SYMBOL = "ZS=F";
 
@@ -34,18 +20,28 @@ async function fetchYahooQuote(symbol: string): Promise<{
     });
 
     if (!response.ok) {
-      console.log(`Yahoo fetch failed: ${response.status}`);
       return null;
     }
 
-    const data = (await response.json()) as YahooFinanceResponse;
-    const result = data.chart?.result?.[0];
+    const data = await response.json();
+    const result = data?.chart?.result?.[0];
     const meta = result?.meta;
 
-    if (!meta || !meta.regularMarketPrice) return null;
+    if (!meta || !meta.regularMarketPrice) {
+      return null;
+    }
 
-    const price = meta.regularMarketPrice / 100;
-    const prevClose = meta.previousClose ? meta.previousClose / 100 : price;
+    const rawPrice = meta.regularMarketPrice;
+    const rawPrevClose = meta.previousClose || meta.regularMarketPrice;
+    
+    let price = rawPrice;
+    let prevClose = rawPrevClose;
+    
+    if (rawPrice > 100) {
+      price = rawPrice / 100;
+      prevClose = rawPrevClose / 100;
+    }
+    
     const change = price - prevClose;
 
     const reportDate = meta.regularMarketTime 
@@ -53,8 +49,7 @@ async function fetchYahooQuote(symbol: string): Promise<{
       : new Date().toISOString();
 
     return { price, change, reportDate };
-  } catch (e) {
-    console.log(`Yahoo fetch error:`, e);
+  } catch {
     return null;
   }
 }
