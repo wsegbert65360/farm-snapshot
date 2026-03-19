@@ -9,7 +9,7 @@ async function fetchYahooQuote(symbol: string): Promise<{
   change: number;
   reportDate: string;
 } | null> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
 
   try {
     const response = await fetch(url, {
@@ -26,27 +26,45 @@ async function fetchYahooQuote(symbol: string): Promise<{
     const data = await response.json();
     const result = data?.chart?.result?.[0];
     const meta = result?.meta;
+    const timestamps = result?.timestamp || [];
 
     if (!meta || !meta.regularMarketPrice) {
       return null;
     }
 
     const rawPrice = meta.regularMarketPrice;
-    const rawPrevClose = meta.previousClose || meta.regularMarketPrice;
-    
     let price = rawPrice;
-    let prevClose = rawPrevClose;
     
     if (rawPrice > 100) {
       price = rawPrice / 100;
-      prevClose = rawPrevClose / 100;
     }
     
-    const change = price - prevClose;
+    let change = 0;
+    let reportDate = new Date().toISOString();
+    
+    if (timestamps.length >= 2) {
+      const currentPrice = meta.regularMarketPrice;
+      const prevTimestamp = timestamps[timestamps.length - 2];
+      const prevResult = result?.indicators?.quote?.[0];
+      
+      if (prevResult && prevResult.close && prevResult.close.length >= 2) {
+        const prevPriceRaw = prevResult.close[prevResult.close.length - 2];
+        let prevPrice = prevPriceRaw;
+        if (prevPriceRaw > 100) {
+          prevPrice = prevPriceRaw / 100;
+        }
+        change = price - prevPrice;
+        reportDate = new Date(prevTimestamp * 1000).toISOString();
+      }
+    }
 
-    const reportDate = meta.regularMarketTime 
-      ? new Date(meta.regularMarketTime * 1000).toISOString()
-      : new Date().toISOString();
+    if (change === 0 && meta.previousClose) {
+      let prevClose = meta.previousClose;
+      if (prevClose > 100) {
+        prevClose = prevClose / 100;
+      }
+      change = price - prevClose;
+    }
 
     return { price, change, reportDate };
   } catch {
