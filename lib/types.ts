@@ -1,6 +1,7 @@
 export interface GrainCommodity {
   price: number;
   change: number;
+  changePercent: number;
   recommendation: "SELL" | "HOLD";
   reason: string;
 }
@@ -8,6 +9,33 @@ export interface GrainCommodity {
 export interface GrainData {
   corn: GrainCommodity;
   soybeans: GrainCommodity;
+  updatedAt: string;
+}
+
+export interface CommoditiesAPIResponse {
+  data?: {
+    [key: string]: {
+      name: string;
+      unit: string;
+      value: number;
+    };
+  };
+  timestamps?: {
+    timestamp: string;
+  };
+}
+
+export interface MarketData {
+  corn: {
+    price: number;
+    change: number;
+    changePercent: number;
+  };
+  soybeans: {
+    price: number;
+    change: number;
+    changePercent: number;
+  };
   updatedAt: string;
 }
 
