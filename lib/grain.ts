@@ -9,7 +9,7 @@ async function fetchYahooQuote(symbol: string): Promise<{
   change: number;
   reportDate: string;
 } | null> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
 
   try {
     const response = await fetch(url, {
@@ -26,48 +26,51 @@ async function fetchYahooQuote(symbol: string): Promise<{
     const data = await response.json();
     const result = data?.chart?.result?.[0];
     const meta = result?.meta;
-    const timestamps = result?.timestamp || [];
 
     if (!meta || !meta.regularMarketPrice) {
       return null;
     }
 
-    const rawPrice = meta.regularMarketPrice;
-    let price = rawPrice;
-    
-    if (rawPrice > 100) {
-      price = rawPrice / 100;
+    let price = meta.regularMarketPrice;
+    if (price > 100) {
+      price = price / 100;
     }
     
+    let prevPrice = price;
     let change = 0;
     let reportDate = new Date().toISOString();
     
-    if (timestamps.length >= 2) {
-      const currentPrice = meta.regularMarketPrice;
-      const prevTimestamp = timestamps[timestamps.length - 2];
-      const prevResult = result?.indicators?.quote?.[0];
+    if (meta.chartPreviousClose && meta.chartPreviousClose > 0) {
+      let rawPrev = meta.chartPreviousClose;
+      if (rawPrev > 100) rawPrev = rawPrev / 100;
+      prevPrice = rawPrev;
+      change = price - prevPrice;
+    } else {
+      const timestamps = result?.timestamp || [];
+      const quotes = result?.indicators?.quote?.[0]?.close || [];
       
-      if (prevResult && prevResult.close && prevResult.close.length >= 2) {
-        const prevPriceRaw = prevResult.close[prevResult.close.length - 2];
-        let prevPrice = prevPriceRaw;
-        if (prevPriceRaw > 100) {
-          prevPrice = prevPriceRaw / 100;
+      if (timestamps.length >= 2 && quotes.length >= 2) {
+        const prevCloseRaw = quotes[quotes.length - 2];
+        if (prevCloseRaw && prevCloseRaw > 0) {
+          let rawPrev = prevCloseRaw;
+          if (rawPrev > 100) rawPrev = rawPrev / 100;
+          prevPrice = rawPrev;
+          change = price - prevPrice;
         }
+      } else if (meta.previousClose && meta.previousClose !== meta.regularMarketPrice) {
+        let rawPrev = meta.previousClose;
+        if (rawPrev > 100) rawPrev = rawPrev / 100;
+        prevPrice = rawPrev;
         change = price - prevPrice;
-        reportDate = new Date(prevTimestamp * 1000).toISOString();
       }
     }
 
-    if (change === 0 && meta.previousClose) {
-      let prevClose = meta.previousClose;
-      if (prevClose > 100) {
-        prevClose = prevClose / 100;
-      }
-      change = price - prevClose;
+    if (meta.regularMarketTime) {
+      reportDate = new Date(meta.regularMarketTime * 1000).toISOString();
     }
 
     return { price, change, reportDate };
-  } catch {
+  } catch (e) {
     return null;
   }
 }

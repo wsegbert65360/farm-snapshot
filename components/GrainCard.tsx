@@ -43,7 +43,6 @@ interface CommodityRowProps {
 function CommodityRow({ name, price, change, recommendation }: CommodityRowProps) {
   const isUp = change > 0;
   const isDown = change < 0;
-  const changeColor = isUp ? "text-green-500" : isDown ? "text-red-500" : "text-slate-500";
   const changeBg = isUp ? "bg-green-100" : isDown ? "bg-red-100" : "bg-slate-100";
   const formatChange = isUp ? `+${change.toFixed(2)}` : change.toFixed(2);
 
@@ -56,11 +55,9 @@ function CommodityRow({ name, price, change, recommendation }: CommodityRowProps
         </span>
       </div>
       <div className={`flex items-center gap-2 px-2 py-1 rounded-lg ${changeBg}`}>
-        <span className={`text-2xl font-bold ${changeColor}`}>
+        <span className="text-sm text-slate-500">${price.toFixed(2)}</span>
+        <span className={`text-2xl font-bold ${isUp ? "text-green-600" : isDown ? "text-red-600" : "text-slate-500"}`}>
           {formatChange}
-        </span>
-        <span className="text-sm text-slate-500">
-          ${price.toFixed(2)}
         </span>
       </div>
     </div>
