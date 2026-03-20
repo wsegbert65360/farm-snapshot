@@ -13,6 +13,7 @@ export const config = {
   },
   grain: {
     sellThreshold: parseFloat(process.env.GRAIN_SELL_THRESHOLD || "-0.03"),
+    commoditiesApiKey: process.env.COMMODITIES_API_KEY || "",
   },
   rainfall: {
     apiUrl: process.env.RAINFALL_API_URL || "https://rain-api.vercel.app",
