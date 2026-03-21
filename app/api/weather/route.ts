@@ -9,6 +9,25 @@ export async function GET() {
   try {
     const [weather, rainfall] = await Promise.all([fetchCurrentWeather(), fetchRainfall()]);
 
+    if (weather.error || rainfall.error) {
+      return NextResponse.json(
+        {
+          error: "Weather data unavailable",
+          locationLabel: config.weather.locationLabel,
+          rain12h: null,
+          rain24h: null,
+          rain72h: null,
+          windMph: null,
+          gustMph: null,
+          tempF: null,
+          isRainingNow: false,
+          rainPredicted: null,
+          updatedAt: new Date().toISOString(),
+        },
+        { status: 503 }
+      );
+    }
+
     const data = {
       locationLabel: config.weather.locationLabel,
       rain12h: rainfall.rain12h,
@@ -18,6 +37,7 @@ export async function GET() {
       gustMph: weather.gustMph,
       tempF: weather.tempF,
       isRainingNow: weather.isRainingNow,
+      rainPredicted: weather.rainPredicted,
       updatedAt: new Date().toISOString(),
     };
 
@@ -28,16 +48,17 @@ export async function GET() {
       {
         error: "Failed to fetch weather data",
         locationLabel: config.weather.locationLabel,
-        rain12h: 0,
-        rain24h: 0,
-        rain72h: 0,
-        windMph: 0,
+        rain12h: null,
+        rain24h: null,
+        rain72h: null,
+        windMph: null,
         gustMph: null,
         tempF: null,
         isRainingNow: false,
+        rainPredicted: null,
         updatedAt: new Date().toISOString(),
       },
-      { status: 200 }
+      { status: 500 }
     );
   }
 }

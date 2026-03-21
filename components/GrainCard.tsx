@@ -32,7 +32,7 @@ export default function GrainCard() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/market");
+      const response = await fetch("/api/grain");
       const result = await response.json();
       setData(result);
       setLastUpdated(new Date().toISOString());

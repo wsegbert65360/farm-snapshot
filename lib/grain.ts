@@ -1,86 +1,109 @@
 import { config } from "./config";
 import { GrainData } from "./types";
+import { isValidNumber, isValidObject } from "./validation";
 
-const CORN_SYMBOL = "ZC=F";
-const SOYBEANS_SYMBOL = "ZS=F";
+const COMMODITIES_API_BASE = "https://commodities-api.com/api/latest";
+const METRIC_TON_TO_BUSHEL = {
+  corn: 39.368,
+  soybeans: 36.744,
+} as const;
 
-async function fetchYahooQuote(symbol: string): Promise<{
+async function fetchCommodityPrice(symbol: string): Promise<{
   price: number;
   change: number;
+  changePercent: number;
   reportDate: string;
 } | null> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
+  const apiKey = config.grain.commoditiesApiKey;
+  if (!apiKey) {
+    return null;
+  }
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "application/json",
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(
+      `${COMMODITIES_API_BASE}?access_key=${apiKey}&base=USD&symbols=${symbol}`,
+      {
+        cache: "no-store",
+        signal: controller.signal,
+      }
+    );
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       return null;
     }
 
-    const data = await response.json();
-    const result = data?.chart?.result?.[0];
-    const meta = result?.meta;
-
-    if (!meta || !meta.regularMarketPrice) {
+    const rawData = await response.json();
+    
+    if (!isValidObject(rawData) || !isValidObject(rawData.data) || !isValidObject(rawData.data.rates)) {
       return null;
     }
-
-    let price = meta.regularMarketPrice;
-    if (price > 100) {
-      price = price / 100;
+    
+    const data = rawData as { data: { rates: Record<string, number> } };
+    const pricePerMetricTon = data.data.rates[symbol];
+    
+    if (!isValidNumber(pricePerMetricTon)) {
+      return null;
     }
-    
-    let prevPrice = price;
+    const conversionFactor = METRIC_TON_TO_BUSHEL[symbol as keyof typeof METRIC_TON_TO_BUSHEL];
+    if (!conversionFactor) {
+      return null;
+    }
+    const bushelPrice = pricePerMetricTon / conversionFactor;
+
+    const yesterdayDate = getYesterdayDate();
+    const yesterdayController = new AbortController();
+    const yesterdayTimeoutId = setTimeout(() => yesterdayController.abort(), 10000);
+    const yesterdayResponse = await fetch(
+      `${COMMODITIES_API_BASE}?access_key=${apiKey}&base=USD&symbols=${symbol}&date=${yesterdayDate}`,
+      {
+        cache: "no-store",
+        signal: yesterdayController.signal,
+      }
+    );
+    clearTimeout(yesterdayTimeoutId);
+
     let change = 0;
-    let reportDate = new Date().toISOString();
-    
-    if (meta.chartPreviousClose && meta.chartPreviousClose > 0) {
-      let rawPrev = meta.chartPreviousClose;
-      if (rawPrev > 100) rawPrev = rawPrev / 100;
-      prevPrice = rawPrev;
-      change = price - prevPrice;
-    } else {
-      const timestamps = result?.timestamp || [];
-      const quotes = result?.indicators?.quote?.[0]?.close || [];
-      
-      if (timestamps.length >= 2 && quotes.length >= 2) {
-        const prevCloseRaw = quotes[quotes.length - 2];
-        if (prevCloseRaw && prevCloseRaw > 0) {
-          let rawPrev = prevCloseRaw;
-          if (rawPrev > 100) rawPrev = rawPrev / 100;
-          prevPrice = rawPrev;
-          change = price - prevPrice;
-        }
-      } else if (meta.previousClose && meta.previousClose !== meta.regularMarketPrice) {
-        let rawPrev = meta.previousClose;
-        if (rawPrev > 100) rawPrev = rawPrev / 100;
-        prevPrice = rawPrev;
-        change = price - prevPrice;
+    let changePercent = 0;
+
+    if (yesterdayResponse.ok) {
+      const yesterdayData = await yesterdayResponse.json();
+      if (yesterdayData?.data?.rates?.[symbol]) {
+        const yesterdayPricePerTon = yesterdayData.data.rates[symbol];
+        const yesterdayPrice = yesterdayPricePerTon / conversionFactor;
+        change = bushelPrice - yesterdayPrice;
+        changePercent = yesterdayPrice > 0 ? (change / yesterdayPrice) * 100 : 0;
       }
     }
 
-    if (meta.regularMarketTime) {
-      reportDate = new Date(meta.regularMarketTime * 1000).toISOString();
-    }
-
-    return { price, change, reportDate };
-  } catch (e) {
+    return {
+      price: Math.round(bushelPrice * 100) / 100,
+      change: Math.round(change * 100) / 100,
+      changePercent: Math.round(changePercent * 100) / 100,
+      reportDate: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error("Grain API error:", error);
     return null;
   }
 }
 
+function getYesterdayDate(): string {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return date.toISOString().split("T")[0];
+}
+
 export async function fetchGrainPrices(): Promise<GrainData> {
-  const { sellThreshold } = config.grain;
+  const { priceDropThreshold } = config.grain;
 
   const [cornData, soybeansData] = await Promise.all([
-    fetchYahooQuote(CORN_SYMBOL),
-    fetchYahooQuote(SOYBEANS_SYMBOL),
+    fetchCommodityPrice("CORN"),
+    fetchCommodityPrice("SOYBEANS"),
   ]);
 
   if (!cornData || !soybeansData) {
@@ -88,12 +111,14 @@ export async function fetchGrainPrices(): Promise<GrainData> {
       corn: {
         price: 0,
         change: 0,
+        changePercent: 0,
         recommendation: "HOLD",
         reason: "API unavailable - check connection",
       },
       soybeans: {
         price: 0,
         change: 0,
+        changePercent: 0,
         recommendation: "HOLD",
         reason: "API unavailable - check connection",
       },
@@ -103,7 +128,7 @@ export async function fetchGrainPrices(): Promise<GrainData> {
 
   const reportDate = cornData.reportDate;
 
-  const cornRecommendation: "SELL" | "HOLD" = cornData.change <= sellThreshold ? "SELL" : "HOLD";
+  const cornRecommendation: "SELL" | "HOLD" = cornData.change <= priceDropThreshold ? "SELL" : "HOLD";
   const cornReason =
     cornRecommendation === "SELL"
       ? `Price fell by ${Math.abs(cornData.change).toFixed(2)} today`
@@ -111,7 +136,7 @@ export async function fetchGrainPrices(): Promise<GrainData> {
       ? "Price improved today"
       : "Price stable today";
 
-  const soybeansRecommendation: "SELL" | "HOLD" = soybeansData.change <= sellThreshold ? "SELL" : "HOLD";
+  const soybeansRecommendation: "SELL" | "HOLD" = soybeansData.change <= priceDropThreshold ? "SELL" : "HOLD";
   const soybeansReason =
     soybeansRecommendation === "SELL"
       ? `Price fell by ${Math.abs(soybeansData.change).toFixed(2)} today`
@@ -123,12 +148,14 @@ export async function fetchGrainPrices(): Promise<GrainData> {
     corn: {
       price: cornData.price,
       change: cornData.change,
+      changePercent: cornData.changePercent,
       recommendation: cornRecommendation,
       reason: cornReason,
     },
     soybeans: {
       price: soybeansData.price,
       change: soybeansData.change,
+      changePercent: soybeansData.changePercent,
       recommendation: soybeansRecommendation,
       reason: soybeansReason,
     },

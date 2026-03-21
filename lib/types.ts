@@ -12,39 +12,12 @@ export interface GrainData {
   updatedAt: string;
 }
 
-export interface CommoditiesAPIResponse {
-  data?: {
-    [key: string]: {
-      name: string;
-      unit: string;
-      value: number;
-    };
-  };
-  timestamps?: {
-    timestamp: string;
-  };
-}
-
-export interface MarketData {
-  corn: {
-    price: number;
-    change: number;
-    changePercent: number;
-  };
-  soybeans: {
-    price: number;
-    change: number;
-    changePercent: number;
-  };
-  updatedAt: string;
-}
-
 export interface WeatherData {
   locationLabel: string;
-  rain12h: number;
-  rain24h: number;
-  rain72h: number;
-  windMph: number;
+  rain12h: number | null;
+  rain24h: number | null;
+  rain72h: number | null;
+  windMph: number | null;
   gustMph: number | null;
   tempF: number | null;
   isRainingNow: boolean;

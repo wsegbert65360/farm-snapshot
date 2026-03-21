@@ -1,7 +1,16 @@
+function parseValidatedFloat(value: string | undefined, fallback: number, min: number, max: number): number {
+  const parsed = parseFloat(value || "");
+  if (isNaN(parsed) || parsed < min || parsed > max) {
+    console.warn(`Invalid env var, using fallback: ${value} -> ${fallback}`);
+    return fallback;
+  }
+  return parsed;
+}
+
 export const config = {
   weather: {
-    lat: parseFloat(process.env.WEATHER_LAT || "38.53"),
-    lon: parseFloat(process.env.WEATHER_LON || "-93.52"),
+    lat: parseValidatedFloat(process.env.WEATHER_LAT, 38.53, -90, 90),
+    lon: parseValidatedFloat(process.env.WEATHER_LON, -93.52, -180, 180),
     locationLabel: process.env.WEATHER_LOCATION_LABEL || "Windsor, MO",
     timezone: process.env.TIMEZONE || "America/Chicago",
   },
@@ -9,10 +18,10 @@ export const config = {
     maxWindMph: parseFloat(process.env.MAX_SPRAY_WIND_MPH || "10"),
     maxGustMph: parseFloat(process.env.MAX_SPRAY_GUST_MPH || "15"),
     rainThreshold: parseFloat(process.env.RAIN_THRESHOLD || "20"),
-    rainForecastHours: parseFloat(process.env.RAIN_FORECAST_HOURS || "3"),
+    rainForecastHours: parseInt(process.env.RAIN_FORECAST_HOURS || "3", 10),
   },
   grain: {
-    sellThreshold: parseFloat(process.env.GRAIN_SELL_THRESHOLD || "-0.03"),
+    priceDropThreshold: parseFloat(process.env.GRAIN_PRICE_DROP_THRESHOLD || "-0.03"),
     commoditiesApiKey: process.env.COMMODITIES_API_KEY || "",
   },
   rainfall: {

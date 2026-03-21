@@ -25,7 +25,7 @@ export default function WeatherCard({ data }: WeatherCardProps) {
         </div>
       </div>
       <div className="grid grid-cols-3 gap-1 text-sm">
-        <WeatherRow label="Wind" value={data.windMph > 0 ? `${data.windMph} mph` : "--"} />
+        <WeatherRow label="Wind" value={data.windMph !== null ? `${data.windMph} mph` : "--"} />
         <WeatherRow label="Gusts" value={data.gustMph ? `${data.gustMph}` : "--"} />
         <WeatherRow
           label="Rain"
@@ -37,11 +37,11 @@ export default function WeatherCard({ data }: WeatherCardProps) {
   );
 }
 
-function RainColumn({ label, value }: { label: string; value: number }) {
+function RainColumn({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="text-center">
       <p className="text-xs text-slate-500">{label}</p>
-      <p className="text-base font-bold text-slate-900">{value.toFixed(2)}"</p>
+      <p className="text-base font-bold text-slate-900">{value !== null ? `${value.toFixed(2)}"` : "--"}</p>
     </div>
   );
 }

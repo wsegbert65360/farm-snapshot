@@ -8,7 +8,28 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const weather = await fetchCurrentWeather();
-    const data = calculateSprayDecision(weather);
+    
+    if (weather.error || weather.windMph === null) {
+      const { maxWindMph, maxGustMph } = config.spray;
+      return NextResponse.json(
+        {
+          status: "WAIT" as const,
+          reason: "Weather data unavailable",
+          windMph: 0,
+          gustMph: null,
+          thresholds: { maxWindMph, maxGustMph },
+          updatedAt: new Date().toISOString(),
+        },
+        { status: 503 }
+      );
+    }
+
+    const data = calculateSprayDecision({
+      windMph: weather.windMph,
+      gustMph: weather.gustMph,
+      isRainingNow: weather.isRainingNow ?? false,
+      rainPredicted: weather.rainPredicted,
+    });
     return NextResponse.json(data);
   } catch (error) {
     console.error("Spray API error:", error);
@@ -23,7 +44,7 @@ export async function GET() {
         thresholds: { maxWindMph, maxGustMph },
         updatedAt: new Date().toISOString(),
       },
-      { status: 200 }
+      { status: 500 }
     );
   }
 }

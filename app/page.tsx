@@ -17,10 +17,10 @@ async function getWeatherData(weather: WeatherData) {
   
   return {
     locationLabel: config.weather.locationLabel,
-    rain12h: rainfall.rain12h ?? 0,
-    rain24h: rainfall.rain24h ?? 0,
-    rain72h: rainfall.rain72h ?? 0,
-    windMph: weather.windMph ?? 0,
+    rain12h: rainfall.rain12h,
+    rain24h: rainfall.rain24h,
+    rain72h: rainfall.rain72h,
+    windMph: weather.windMph,
     gustMph: weather.gustMph,
     tempF: weather.tempF,
     isRainingNow: weather.isRainingNow ?? false,
