@@ -4,6 +4,7 @@ import SprayCard from "@/components/SprayCard";
 import { fetchCurrentWeather } from "@/lib/weather";
 import { fetchRainfall } from "@/lib/rainfall";
 import { calculateSprayDecision } from "@/lib/spray";
+import { fetchGrainPrices } from "@/lib/grain";
 import { config } from "@/lib/config";
 
 export const revalidate = 900;
@@ -51,7 +52,10 @@ function getSprayData(weather: WeatherData) {
 }
 
 export default async function Home() {
-  const weather = await fetchCurrentWeather();
+  const [weather, grainData] = await Promise.all([
+    fetchCurrentWeather(),
+    fetchGrainPrices(),
+  ]);
   
   const [weatherData, sprayData] = await Promise.all([
     getWeatherData(weather),
@@ -60,24 +64,16 @@ export default async function Home() {
 
   const hasAnyError = weatherData.error || sprayData.reason.includes("unavailable");
 
-  if (hasAnyError) {
-    return (
-      <main className="space-y-2">
-        <GrainCard />
-        <WeatherCard data={weatherData} />
-        <SprayCard data={sprayData} />
+  return (
+    <main className="space-y-2">
+      <GrainCard data={grainData} />
+      <WeatherCard data={weatherData} />
+      <SprayCard data={sprayData} />
+      {hasAnyError && (
         <p className="text-center text-xs text-red-500">
           Check API connections
         </p>
-      </main>
-    );
-  }
-
-  return (
-    <main className="space-y-2">
-      <GrainCard />
-      <WeatherCard data={weatherData} />
-      <SprayCard data={sprayData} />
+      )}
     </main>
   );
 }

@@ -13,7 +13,11 @@ export default function SprayCard({ data }: SprayCardProps) {
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-base font-semibold text-slate-900">Spray</h2>
         <span className="text-xs text-slate-400">
-          {new Date(data.updatedAt).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric", day: "numeric" })}
+          {new Date(data.updatedAt).toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            timeZone: "America/Chicago",
+          })}
         </span>
       </div>
       <div className="flex items-center gap-4">

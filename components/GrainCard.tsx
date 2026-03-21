@@ -1,86 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import { GrainData } from "@/lib/types";
 
-interface MarketData {
-  corn: {
-    price: number;
-    change: number;
-    changePercent: number;
-    recommendation: "SELL" | "HOLD";
-    reason: string;
-  };
-  soybeans: {
-    price: number;
-    change: number;
-    changePercent: number;
-    recommendation: "SELL" | "HOLD";
-    reason: string;
-  };
-  updatedAt: string;
-  error?: string;
+interface GrainCardProps {
+  data: GrainData;
 }
 
-export default function GrainCard() {
-  const [data, setData] = useState<MarketData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-
-  const fetchMarketData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/grain");
-      const result = await response.json();
-      setData(result);
-      setLastUpdated(new Date().toISOString());
-    } catch (err) {
-      setError("Failed to fetch data");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchMarketData();
-  }, [fetchMarketData]);
-
-  if (loading && !data) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base font-semibold text-slate-900">Grain</h2>
-        </div>
-        <div className="flex items-center justify-center py-6">
-          <div className="animate-pulse text-slate-400">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !data) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base font-semibold text-slate-900">Grain</h2>
-        </div>
-        <div className="text-center py-4">
-          <p className="text-red-500 text-sm mb-3">{error}</p>
-          <button
-            onClick={fetchMarketData}
-            className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!data) return null;
-
+export default function GrainCard({ data }: GrainCardProps) {
   const isMarketUp = data.corn.change > 0 || data.soybeans.change > 0;
   const isMarketDown = data.corn.change < 0 || data.soybeans.change < 0;
 
@@ -91,11 +17,13 @@ export default function GrainCard() {
           <h2 className="text-base font-semibold text-slate-900">Grain</h2>
           <MarketStatusIndicator isUp={isMarketUp} isDown={isMarketDown} />
         </div>
-        {lastUpdated && (
-          <span className="text-xs text-slate-400">
-            Updated {new Date(lastUpdated).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" })}
-          </span>
-        )}
+        <span className="text-xs text-slate-400">
+          {new Date(data.updatedAt).toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            timeZone: "America/Chicago",
+          })}
+        </span>
       </div>
       <div className="space-y-2">
         <CommodityRow
@@ -115,16 +43,6 @@ export default function GrainCard() {
           />
         </div>
       </div>
-      {error && (
-        <div className="mt-2 pt-2 border-t border-slate-100">
-          <button
-            onClick={fetchMarketData}
-            className="text-xs text-blue-500 hover:text-blue-600"
-          >
-            Retry
-          </button>
-        </div>
-      )}
     </div>
   );
 }
