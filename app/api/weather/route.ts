@@ -14,9 +14,9 @@ export async function GET() {
         {
           error: "Weather data unavailable",
           locationLabel: config.weather.locationLabel,
-          rain12h: null,
-          rain24h: null,
-          rain72h: null,
+          rain1d: null,
+          rain3d: null,
+          rain7d: null,
           windMph: null,
           gustMph: null,
           tempF: null,
@@ -30,9 +30,9 @@ export async function GET() {
 
     const data = {
       locationLabel: config.weather.locationLabel,
-      rain12h: rainfall.rain12h,
-      rain24h: rainfall.rain24h,
-      rain72h: rainfall.rain72h,
+      rain1d: rainfall.rain1d,
+      rain3d: rainfall.rain3d,
+      rain7d: rainfall.rain7d,
       windMph: weather.windMph,
       gustMph: weather.gustMph,
       tempF: weather.tempF,
@@ -48,9 +48,9 @@ export async function GET() {
       {
         error: "Failed to fetch weather data",
         locationLabel: config.weather.locationLabel,
-        rain12h: null,
-        rain24h: null,
-        rain72h: null,
+        rain1d: null,
+        rain3d: null,
+        rain7d: null,
         windMph: null,
         gustMph: null,
         tempF: null,

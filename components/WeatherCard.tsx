@@ -23,9 +23,9 @@ export default function WeatherCard({ data }: WeatherCardProps) {
           <p className="text-3xl font-bold text-blue-600">{data.tempF ? `${data.tempF}°` : "--"}</p>
         </div>
         <div className="grid grid-cols-3 gap-1">
-          <RainColumn label="12h" value={data.rain12h} />
-          <RainColumn label="24h" value={data.rain24h} />
-          <RainColumn label="72h" value={data.rain72h} />
+          <RainColumn label="1d" value={data.rain1d} />
+          <RainColumn label="3d" value={data.rain3d} />
+          <RainColumn label="7d" value={data.rain7d} />
         </div>
       </div>
       <div className="grid grid-cols-3 gap-1 text-sm">

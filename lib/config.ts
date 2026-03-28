@@ -9,8 +9,8 @@ function parseValidatedFloat(value: string | undefined, fallback: number, min: n
 
 export const config = {
   weather: {
-    lat: parseValidatedFloat(process.env.WEATHER_LAT, 38.53, -90, 90),
-    lon: parseValidatedFloat(process.env.WEATHER_LON, -93.52, -180, 180),
+    lat: parseValidatedFloat(process.env.WEATHER_LAT, 38.4626783, -90, 90),
+    lon: parseValidatedFloat(process.env.WEATHER_LON, -93.5373719, -180, 180),
     locationLabel: process.env.WEATHER_LOCATION_LABEL || "Windsor, MO",
     timezone: process.env.TIMEZONE || "America/Chicago",
   },
@@ -26,5 +26,6 @@ export const config = {
   },
   rainfall: {
     apiUrl: process.env.RAINFALL_API_URL || "https://rain-api.vercel.app",
+    fieldId: process.env.FIELD_ID || "",
   },
 };
