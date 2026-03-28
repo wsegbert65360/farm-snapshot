@@ -14,9 +14,9 @@ export interface GrainData {
 
 export interface WeatherData {
   locationLabel: string;
-  rain12h: number | null;
-  rain24h: number | null;
-  rain72h: number | null;
+  rain1d: number | null;
+  rain3d: number | null;
+  rain7d: number | null;
   windMph: number | null;
   gustMph: number | null;
   tempF: number | null;
@@ -38,19 +38,4 @@ export interface SprayData {
   gustMph: number | null;
   thresholds: SprayThresholds;
   updatedAt: string;
-}
-
-export interface RainfallResponse {
-  location: {
-    type: string;
-    lat: number;
-    lon: number;
-  };
-  periodEndUtc: string;
-  units: string;
-  rain: {
-    "12h": number;
-    "24h": number;
-    "72h": number;
-  };
 }
