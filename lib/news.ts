@@ -1,121 +1,146 @@
-import ZAI from "z-ai-web-dev-sdk";
 import { NewsData } from "./types";
 
 const MAX_ARTICLES = 3;
 
-const SEARCH_QUERIES = [
-  "grain farming news today corn soybeans prices market",
-  "agriculture news row crop farmers 2026",
-  "corn soybean farming advice planting harvest",
+const SEARCH_TERMS = "corn+soybean+farming+grain+market+prices";
+
+// Prefer these sources — skip generic ones
+const PREFERRED_SOURCES = [
+  "Farm Progress",
+  "Successful Farming",
+  "AgWeb",
+  "Pro Farmer",
+  "DTN",
+  "Farm Futures",
+  "Reuters",
+  "Bloomberg",
+  "USDA",
+  "CME Group",
+  "Farm Journal",
+  "No-Till Farmer",
+  "Beef Magazine",
 ];
 
-// Domains to prefer — reputable ag sources
-const GOOD_DOMAINS = [
-  "agweb.com",
-  "profarmer.com",
-  "farmprogress.com",
-  "dtpfertilizer.com",
-  "usda.gov",
-  "cbot.com",
-  "successfulfarming.com",
-  "agriculture.com",
-  "farmjournal.com",
-  "no-tillfarmer.com",
-  "beefmagazine.com",
-  "drovers.com",
-  "farmgate.usda.gov",
-  "thefieldreport.ca",
-  "realagriculture.com",
-  "grainnet.com",
-];
-
-// Domains to skip — YouTube, social media, clickbait
-const SKIP_DOMAINS = [
-  "youtube.com",
-  "facebook.com",
-  "twitter.com",
-  "x.com",
-  "instagram.com",
-  "tiktok.com",
-  "reddit.com",
-  "pinterest.com",
-  "linkedin.com",
-];
-
-interface SearchResult {
-  url: string;
-  name: string;
-  snippet: string;
-  host_name: string;
-  rank: number;
+interface RssItem {
+  title: string;
+  link: string;
+  source: string;
+  pubDate: string;
 }
 
 function extractDomain(url: string): string {
   try {
-    return new URL(url).hostname.replace(/^www\./, "");
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    // Google News links are redirects — extract real domain from the URL path
+    if (host === "news.google.com") {
+      const match = url.match(/\/articles\/[A-Za-z0-9_-]+\.(.*)$/);
+      if (match) return match[1].split("/")[0];
+    }
+    return host;
   } catch {
     return "";
   }
 }
 
-function scoreResult(result: SearchResult): number {
-  const domain = extractDomain(result.url);
-  let score = 100 - result.rank * 10;
+function scoreItem(item: RssItem): number {
+  let score = 50;
 
   // Bonus for preferred ag sources
-  if (GOOD_DOMAINS.some(d => domain.includes(d))) {
-    score += 50;
+  for (const src of PREFERRED_SOURCES) {
+    if (item.source.includes(src) || item.link.includes(src.toLowerCase().replace(/ /g, ""))) {
+      score += 30;
+      break;
+    }
   }
 
-  // Penalize skipped domains
-  if (SKIP_DOMAINS.some(d => domain.includes(d))) {
-    score -= 200;
-  }
-
-  // Bonus for meaningful snippet (indicates real article, not a stub)
-  if (result.snippet.length > 80) {
-    score += 10;
+  // Bonus for having "corn", "soy", "grain", "farm" in the title
+  const titleLower = item.title.toLowerCase();
+  if (/corn|soy|grain|farm|crop|plant|harvest|market|price/.test(titleLower)) {
+    score += 15;
   }
 
   return score;
 }
 
+function parseRssXml(xml: string): RssItem[] {
+  // Lightweight XML parser — no need for a full library for simple RSS
+  const items: RssItem[] = [];
+
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+
+  while ((match = itemRegex.exec(xml)) !== null) {
+    const block = match[1];
+
+    const titleMatch = block.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/);
+    const linkMatch = block.match(/<link>([\s\S]*?)<\/link>/);
+    const sourceMatch = block.match(/<source[^>]*>([\s\S]*?)<\/source>/);
+    const pubDateMatch = block.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
+
+    if (!titleMatch) continue;
+
+    const title = (titleMatch[1] || titleMatch[2] || "").trim();
+    const link = (linkMatch?.[1] || "").trim();
+    const source = (sourceMatch?.[1] || extractDomain(link) || "News").trim();
+    const pubDate = (pubDateMatch?.[1] || "").trim();
+
+    if (title && link) {
+      items.push({ title, link, source, pubDate });
+    }
+  }
+
+  return items;
+}
+
 export async function fetchFarmNews(): Promise<NewsData> {
   try {
-    const zai = await ZAI.create();
+    const url = `https://news.google.com/rss/search?q=${SEARCH_TERMS}&hl=en-US&gl=US&ceid=US:en`;
 
-    // Run multiple queries in parallel for broader coverage
-    const searchPromises = SEARCH_QUERIES.map(query =>
-      zai.functions.invoke("web_search", { query, num: 8 }).catch(() => [] as SearchResult[])
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    const allResults = await Promise.all(searchPromises);
-    const flat: SearchResult[] = allResults.flat();
-
-    // Deduplicate by URL
-    const seen = new Set<string>();
-    const unique = flat.filter(r => {
-      if (seen.has(r.url)) return false;
-      seen.add(r.url);
-      return true;
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Farm-Command/1.0",
+      },
+      signal: controller.signal,
     });
 
-    // Score, sort, and take top 3
-    const ranked = unique
-      .map(r => ({ ...r, score: scoreResult(r) }))
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.error(`Google News RSS returned ${response.status}`);
+      return { articles: [], updatedAt: new Date().toISOString() };
+    }
+
+    const xml = await response.text();
+    const items = parseRssXml(xml);
+
+    if (items.length === 0) {
+      console.error("No articles parsed from RSS feed");
+      return { articles: [], updatedAt: new Date().toISOString() };
+    }
+
+    // Score, deduplicate by title similarity, and take top 3
+    const seenTitles = new Set<string>();
+    const ranked = items
+      .map((item) => ({ ...item, score: scoreItem(item) }))
       .sort((a, b) => b.score - a.score)
+      .filter((item) => {
+        // Deduplicate by first 6 words of title
+        const key = item.title.split(/\s+/).slice(0, 6).join(" ").toLowerCase();
+        if (seenTitles.has(key)) return false;
+        seenTitles.add(key);
+        return true;
+      })
       .slice(0, MAX_ARTICLES);
 
-    // Filter out any remaining bad domains
-    const articles = ranked
-      .filter(r => !SKIP_DOMAINS.some(d => extractDomain(r.url).includes(d)))
-      .slice(0, MAX_ARTICLES)
-      .map(r => ({
-        title: r.name,
-        url: r.url,
-        source: r.host_name.replace(/^www\./, ""),
-        snippet: r.snippet.length > 120 ? r.snippet.slice(0, 117) + "..." : r.snippet,
-      }));
+    const articles = ranked.map((item) => ({
+      title: item.title,
+      url: item.link,
+      source: item.source,
+      snippet: "",
+    }));
 
     return {
       articles,
