@@ -2,10 +2,12 @@ import GrainCard from "@/components/GrainCard";
 import WeatherCard from "@/components/WeatherCard";
 import SprayCard from "@/components/SprayCard";
 import ForecastCard from "@/components/ForecastCard";
+import NewsCard from "@/components/NewsCard";
 import { fetchCurrentWeather, fetchDailyForecast } from "@/lib/weather";
 import { fetchRainfall } from "@/lib/rainfall";
 import { calculateSprayDecision } from "@/lib/spray";
 import { fetchGrainPrices } from "@/lib/grain";
+import { fetchFarmNews } from "@/lib/news";
 import { config } from "@/lib/config";
 
 export const revalidate = 900;
@@ -54,10 +56,11 @@ function getSprayData(weather: WeatherData) {
 }
 
 export default async function Home() {
-  const [weather, grainData, forecast] = await Promise.all([
+  const [weather, grainData, forecast, newsData] = await Promise.all([
     fetchCurrentWeather(),
     fetchGrainPrices(),
     fetchDailyForecast(10),
+    fetchFarmNews(),
   ]);
 
   const [weatherData, sprayData] = await Promise.all([
@@ -73,6 +76,7 @@ export default async function Home() {
       <WeatherCard data={weatherData} />
       <SprayCard data={sprayData} />
       <ForecastCard days={forecast.days} updatedAt={new Date().toISOString()} />
+      <NewsCard data={newsData} />
       {hasAnyError && (
         <p className="text-center text-xs text-red-500">
           ⚠️ API connections down — weather or spray data unavailable

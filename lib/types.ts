@@ -55,3 +55,15 @@ export interface SprayData {
   thresholds: SprayThresholds;
   updatedAt: string;
 }
+
+export interface NewsArticle {
+  title: string;
+  url: string;
+  source: string;
+  snippet: string;
+}
+
+export interface NewsData {
+  articles: NewsArticle[];
+  updatedAt: string;
+}
