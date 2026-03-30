@@ -1,4 +1,5 @@
 import { SprayData } from "@/lib/types";
+import { config } from "@/lib/config";
 
 interface SprayCardProps {
   data: SprayData;
@@ -16,7 +17,7 @@ export default function SprayCard({ data }: SprayCardProps) {
           {new Date(data.updatedAt).toLocaleTimeString("en-US", {
             hour: "numeric",
             minute: "2-digit",
-            timeZone: "America/Chicago",
+            timeZone: config.weather.timezone,
           })}
         </span>
       </div>
@@ -29,7 +30,7 @@ export default function SprayCard({ data }: SprayCardProps) {
         <div className="flex-1">
           <p className="text-base text-slate-900 font-medium">{data.reason}</p>
           <p className="text-sm text-slate-500">
-            Wind: {data.windMph} mph {data.gustMph ? `| Gusts: ${data.gustMph}` : ""}
+            Wind: {data.windMph} mph {data.gustMph ? `| Gusts: ${data.gustMph} mph` : ""}
           </p>
         </div>
       </div>

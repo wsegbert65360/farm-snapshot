@@ -38,7 +38,7 @@ function getSprayData(weather: WeatherData) {
       reason: "Weather data unavailable",
       windMph: 0,
       gustMph: null,
-      thresholds: config.spray,
+      thresholds: { maxWindMph: config.spray.maxWindMph, maxGustMph: config.spray.maxGustMph },
       updatedAt: new Date().toISOString(),
     };
   }

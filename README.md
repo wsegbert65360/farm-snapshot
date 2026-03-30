@@ -4,18 +4,18 @@ Daily farm snapshot with grain prices, weather/rainfall, and spray decisions.
 
 ## Features
 
-- **Grain**: Corn and soybean prices with SELL/HOLD recommendations (Yahoo Finance)
-- **Weather**: Current conditions from US National Weather Service
-- **Rainfall**: 12h/24h/72h totals from existing Rain API
-- **Spray**: GO/WAIT decision based on wind and gust thresholds
+- **Grain**: Corn and soybean prices with SELL/HOLD recommendations (Commodities-API.com)
+- **Weather**: Current conditions from Open-Meteo API
+- **Rainfall**: 1d/3d/7d totals from existing Rain API
+- **Spray**: GO/WAIT decision based on wind, gusts, rain status, and rain forecast
 
 ## Tech Stack
 
 - Next.js 14 (App Router)
 - TypeScript
 - Tailwind CSS
-- US National Weather Service API (weather)
-- Yahoo Finance API (grain)
+- Open-Meteo API (weather)
+- Commodities-API.com (grain prices)
 - Rain API (rainfall totals)
 
 ## Setup
@@ -41,14 +41,18 @@ Daily farm snapshot with grain prices, weather/rainfall, and spray decisions.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `WEATHER_LAT` | Latitude for weather | 38.53 |
-| `WEATHER_LON` | Longitude for weather | -93.52 |
+| `WEATHER_LAT` | Latitude for weather | 38.4626783 |
+| `WEATHER_LON` | Longitude for weather | -93.5373719 |
 | `WEATHER_LOCATION_LABEL` | Display name | "Windsor, MO" |
-| `TIMEZONE` | Timezone for rainfall | America/Chicago |
-| `MAX_SPRAY_WIND_MPH` | Max wind for spray | 10 |
-| `MAX_SPRAY_GUST_MPH` | Max gust for spray | 15 |
-| `GRAIN_SELL_THRESHOLD` | Price drop threshold for SELL | -0.03 |
+| `TIMEZONE` | Timezone for display and rainfall | America/Chicago |
+| `MAX_SPRAY_WIND_MPH` | Max wind speed for spray GO | 10 |
+| `MAX_SPRAY_GUST_MPH` | Max gust speed for spray GO | 15 |
+| `RAIN_THRESHOLD` | Precipitation probability threshold (%) | 20 |
+| `RAIN_FORECAST_HOURS` | Hours to check rain forecast | 3 |
+| `GRAIN_PRICE_DROP_THRESHOLD` | Price drop threshold for SELL recommendation | -0.03 |
+| `COMMODITIES_API_KEY` | API key for Commodities-API.com | (required for grain prices) |
 | `RAINFALL_API_URL` | URL for rainfall API | https://rain-api.vercel.app |
+| `FIELD_ID` | Field ID for rainfall API | (required for rainfall data) |
 
 ## Deployment to Vercel
 
@@ -62,6 +66,7 @@ Daily farm snapshot with grain prices, weather/rainfall, and spray decisions.
 
 3. Add environment variables in Vercel dashboard:
    - Copy `.env.example` values
+   - Add `COMMODITIES_API_KEY` and `FIELD_ID`
    - Add `NEXT_PUBLIC_API_URL` = your-production-url
 
 ## API Endpoints
@@ -74,6 +79,6 @@ Daily farm snapshot with grain prices, weather/rainfall, and spray decisions.
 
 | Service | API | API Key Required? |
 |---------|-----|------------------|
-| Weather | US National Weather Service (api.weather.gov) | No |
-| Rainfall | rain-api.vercel.app | No |
-| Grain | Yahoo Finance | No |
+| Weather | Open-Meteo (api.open-meteo.com) | No |
+| Rainfall | rain-api.vercel.app | Requires `FIELD_ID` |
+| Grain | Commodities-API.com | Yes (`COMMODITIES_API_KEY`) |

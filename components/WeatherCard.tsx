@@ -1,4 +1,5 @@
 import { WeatherData } from "@/lib/types";
+import { config } from "@/lib/config";
 
 interface WeatherCardProps {
   data: WeatherData;
@@ -13,7 +14,7 @@ export default function WeatherCard({ data }: WeatherCardProps) {
           {new Date(data.updatedAt).toLocaleTimeString("en-US", {
             hour: "numeric",
             minute: "2-digit",
-            timeZone: "America/Chicago",
+            timeZone: config.weather.timezone,
           })}
         </span>
       </div>
@@ -30,7 +31,7 @@ export default function WeatherCard({ data }: WeatherCardProps) {
       </div>
       <div className="grid grid-cols-3 gap-1 text-sm">
         <WeatherRow label="Wind" value={data.windMph !== null ? `${data.windMph} mph` : "--"} />
-        <WeatherRow label="Gusts" value={data.gustMph ? `${data.gustMph}` : "--"} />
+        <WeatherRow label="Gusts" value={data.gustMph ? `${data.gustMph} mph` : "--"} />
         <WeatherRow
           label="Rain"
           value={data.isRainingNow ? "Yes" : "No"}

@@ -1,48 +1,52 @@
-"use client";
-
 import { GrainData } from "@/lib/types";
+import { config } from "@/lib/config";
 
 interface GrainCardProps {
   data: GrainData;
 }
 
 export default function GrainCard({ data }: GrainCardProps) {
-  const isMarketUp = data.corn.change > 0 || data.soybeans.change > 0;
-  const isMarketDown = data.corn.change < 0 || data.soybeans.change < 0;
+  const isUnavailable = data.corn.price === 0 && data.corn.change === 0;
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold text-slate-900">Grain</h2>
-          <MarketStatusIndicator isUp={isMarketUp} isDown={isMarketDown} />
+          {!isUnavailable && <MarketStatusIndicator isUp={data.corn.change > 0 || data.soybeans.change > 0} isDown={data.corn.change < 0 || data.soybeans.change < 0} />}
         </div>
         <span className="text-xs text-slate-400">
           {new Date(data.updatedAt).toLocaleTimeString("en-US", {
             hour: "numeric",
             minute: "2-digit",
-            timeZone: "America/Chicago",
+            timeZone: config.weather.timezone,
           })}
         </span>
       </div>
-      <div className="space-y-2">
-        <CommodityRow
-          name="CORN"
-          price={data.corn.price}
-          change={data.corn.change}
-          changePercent={data.corn.changePercent}
-          recommendation={data.corn.recommendation}
-        />
-        <div className="border-t border-slate-100 pt-2">
-          <CommodityRow
-            name="SOYBEANS"
-            price={data.soybeans.price}
-            change={data.soybeans.change}
-            changePercent={data.soybeans.changePercent}
-            recommendation={data.soybeans.recommendation}
-          />
+      {isUnavailable ? (
+        <div className="flex items-center justify-center py-4">
+          <p className="text-sm text-slate-400">{data.corn.reason}</p>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-2">
+          <CommodityRow
+            name="CORN"
+            price={data.corn.price}
+            change={data.corn.change}
+            changePercent={data.corn.changePercent}
+            recommendation={data.corn.recommendation}
+          />
+          <div className="border-t border-slate-100 pt-2">
+            <CommodityRow
+              name="SOYBEANS"
+              price={data.soybeans.price}
+              change={data.soybeans.change}
+              changePercent={data.soybeans.changePercent}
+              recommendation={data.soybeans.recommendation}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -54,7 +58,7 @@ interface MarketStatusIndicatorProps {
 
 function MarketStatusIndicator({ isUp, isDown }: MarketStatusIndicatorProps) {
   if (!isUp && !isDown) return null;
-  
+
   return (
     <span
       className={`w-2 h-2 rounded-full ${isUp ? "bg-green-500" : "bg-red-500"}`}

@@ -23,7 +23,7 @@
 - No simple JSON API without authentication
 
 ### Options for Future:
-1. **DTN Test Key** - Free tier available (key: `REDACTED_STORE_IN_ENV_VAR`)
+1. **DTN Test Key** - Free tier available (store in environment variable)
 2. **PDF Parsing** - Parse USDA PDF reports
 3. **Manual Updates** - Update fallback prices weekly
 
