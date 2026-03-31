@@ -136,8 +136,9 @@ export async function fetchCropMaturity(): Promise<CropMaturityData> {
   const soyPlantDate = `${year}-05-10`;
 
   // Calculate how many past days to fetch (from April 1)
+  // Clamp to 0 minimum — before April 1, just use current day's data
   const apr1 = new Date(`${year}-04-01T12:00:00`);
-  const diffDays = Math.max(1, Math.ceil((now.getTime() - apr1.getTime()) / (1000 * 60 * 60 * 24)));
+  const diffDays = Math.max(0, Math.ceil((now.getTime() - apr1.getTime()) / (1000 * 60 * 60 * 24)));
   const pastDays = diffDays + 1;
 
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&timezone=${encodeURIComponent(timezone)}&forecast_days=1&past_days=${pastDays}`;
@@ -188,16 +189,42 @@ export async function fetchCropMaturity(): Promise<CropMaturityData> {
     const cornDays = Math.max(0, Math.ceil((now.getTime() - new Date(cornPlantDate + "T12:00:00").getTime()) / (1000 * 60 * 60 * 24)));
     const soyDays = Math.max(0, Math.ceil((now.getTime() - new Date(soyPlantDate + "T12:00:00").getTime()) / (1000 * 60 * 60 * 24)));
 
+    // Before planting, show pre-season state
+    if (cornDays <= 0 && soyDays <= 0) {
+      return {
+        crops: [{
+          crop: "Pre-Season",
+          emoji: "📅",
+          stages: [],
+          currentStageIdx: 0,
+          accumulatedGDD: 0,
+          plantingDate: cornPlantDate,
+          daysSincePlanting: 0,
+          gddToMaturity: 0,
+          gddRemaining: 0,
+          estDaysToMaturity: null,
+          progressPct: 0,
+        }],
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
     const cornProgress = buildCropProgress("Corn", "🌽", CORN_STAGES, CORN_GDD_TO_MATURE, cornGDD, cornPlantDate, avgDailyGDD);
     cornProgress.daysSincePlanting = cornDays;
 
     const soyProgress = buildCropProgress("Soybeans", "🫘", SOY_STAGES, SOY_GDD_TO_MATURE, soyGDD, soyPlantDate, avgDailyGDD);
     soyProgress.daysSincePlanting = soyDays;
 
-    return {
-      crops: [cornProgress, soyProgress],
-      updatedAt: new Date().toISOString(),
-    };
+    // If corn not yet planted but soybeans might be soon, only show corn as pre-season
+    const crops = [];
+    if (cornDays > 0) crops.push(cornProgress);
+    if (soyDays > 0) crops.push(soyProgress);
+    if (crops.length === 0) {
+      // At least one should be > 0 at this point, but fallback
+      crops.push(cornProgress);
+    }
+
+    return { crops, updatedAt: new Date().toISOString() };
   } catch (e) {
     console.error("Crop maturity API error:", e);
     return { crops: [], error: "API unavailable", updatedAt: new Date().toISOString() };

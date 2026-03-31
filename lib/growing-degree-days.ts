@@ -56,12 +56,17 @@ export async function fetchGDD(): Promise<GDDData> {
   const { lat, lon, timezone } = config.weather;
 
   // Fetch daily max/min temps for the season (April 1 to today)
+  // Use timezone-aware date comparison to avoid off-by-one errors
   const now = new Date();
+  const todayInTz = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(now);
   const seasonStart = getStartDate(4, 1, timezone); // April 1
   const soyStart = getStartDate(5, 1, timezone);    // May 1
 
-  // Calculate days since April 1, add buffer
-  const diffDays = Math.ceil((now.getTime() - seasonStart.getTime()) / (1000 * 60 * 60 * 24));
+  // Calculate days since April 1, clamped to non-negative
+  const todayDate = new Date(todayInTz + "T12:00:00");
+  const diffDays = Math.max(0, Math.ceil((todayDate.getTime() - seasonStart.getTime()) / (1000 * 60 * 60 * 24)));
   const fetchDays = Math.max(diffDays + 1, 7);
 
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&timezone=${encodeURIComponent(timezone)}&forecast_days=1&past_days=${fetchDays}`;

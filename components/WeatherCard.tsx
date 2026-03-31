@@ -38,6 +38,11 @@ export default function WeatherCard({ data }: WeatherCardProps) {
           valueClass={data.isRainingNow ? "text-blue-600 font-medium" : ""}
         />
       </div>
+      {data.rainPredicted && (
+        <p className="text-xs text-amber-600 text-center font-medium mt-1">
+          ⚠️ Rain expected within {config.spray.rainForecastHours}hrs
+        </p>
+      )}
     </div>
   );
 }

@@ -115,14 +115,14 @@ export default async function Home() {
     fetchRadar(),
     fetchSoilTemp(),
     fetchDewPoint(),
-fetchGDD(),
- fetchFrostAlert(),
- fetchBarometer(),
+    fetchGDD(),
+    fetchFrostAlert(),
+    fetchBarometer(),
     fetchSprayDayPlanner(),
- fetchDryingConditions(),
- fetchRainTimeline(),
- fetchFieldTrafficability(),
- fetchCropMaturity(),
+    fetchDryingConditions(),
+    fetchRainTimeline(),
+    fetchFieldTrafficability(),
+    fetchCropMaturity(),
   ]);
 
   const [weatherData, sprayData] = await Promise.all([

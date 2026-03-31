@@ -32,22 +32,34 @@ function mmToIn(mm: number): number {
 }
 
 function formatHour(isoTime: string): string {
-  const date = new Date(isoTime);
-  let h = date.getHours();
+  // Open-Meteo returns times in the configured timezone (e.g. "2026-03-31T08:00")
+  // Extract hour directly from string to avoid server timezone double-conversion
+  const match = isoTime.match(/T(\d{2}):/);
+  if (!match) return "?";
+  let h = parseInt(match[1], 10);
   const ampm = h >= 12 ? "PM" : "AM";
   h = h % 12 || 12;
   return `${h}${ampm}`;
 }
 
-function findNowIndex(times: string[]): number {
-  const now = new Date();
-  // Open-Meteo returns hourly timestamps like "2025-06-15T08:00"
-  // Find the hour that best matches "now"
-  const currentHour = now.getHours();
+function extractHourFromTime(isoTime: string): number {
+  const match = isoTime.match(/T(\d{2}):/);
+  return match ? parseInt(match[1], 10) : -1;
+}
 
-  for (let i = 0; i < times.length; i++) {
-    const d = new Date(times[i]);
-    if (d.getHours() === currentHour) return i;
+function findNowIndex(times: string[]): number {
+  // Use the server's current hour in the farm's timezone
+  const currentHourStr = new Intl.DateTimeFormat("en-US", {
+    timeZone: config.weather.timezone,
+    hour: "numeric",
+    hour12: false,
+  }).format(new Date());
+  const currentHour = parseInt(currentHourStr, 10);
+
+  // Find the first hour entry that matches the current hour
+  // Prefer the matching hour from the current day (look from end to get most recent)
+  for (let i = times.length - 1; i >= 0; i--) {
+    if (extractHourFromTime(times[i]) === currentHour) return i;
   }
   return 0;
 }

@@ -1,5 +1,5 @@
 import { config } from "./config";
-import { isValidObject } from "./validation";
+import { isValidNumber, isValidObject } from "./validation";
 
 export interface DewPointData {
   tempF: number | null;
@@ -69,6 +69,3 @@ export async function fetchDewPoint(): Promise<DewPointData> {
   }
 }
 
-function isValidNumber(value: unknown): value is number {
-  return typeof value === "number" && !isNaN(value);
-}

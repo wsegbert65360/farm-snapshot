@@ -52,6 +52,15 @@ export default function CropMaturityCard({ crops, error }: CropMaturityCardProps
         <span className="text-[10px] font-medium text-slate-400">Planted Apr 15 / May 10</span>
       </div>
 
+      {/* Pre-season state: before any planting */}
+      {crops.length === 1 && crops[0].crop === "Pre-Season" ? (
+        <div className="text-center py-4">
+          <p className="text-lg">📅</p>
+          <p className="text-sm font-semibold text-slate-600">Pre-Season</p>
+          <p className="text-xs text-slate-400 mt-1">Corn planted ~Apr 15 · Soybeans ~May 10</p>
+        </div>
+      ) : (
+      <>
       {crops.map((crop) => {
         const stage = crop.stages[crop.currentStageIdx];
         const isMature = crop.accumulatedGDD >= crop.gddToMaturity;
@@ -143,6 +152,8 @@ export default function CropMaturityCard({ crops, error }: CropMaturityCardProps
           </div>
         );
       })}
+      </>
+      )}
     </div>
   );
 }

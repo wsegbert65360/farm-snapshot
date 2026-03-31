@@ -40,10 +40,16 @@ function dayLabel(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00");
   const today = new Date();
   today.setHours(12, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (d.toDateString() === today.toDateString()) return "Today";
+  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+  if (d.toDateString() === tomorrow.toDateString()) return "Tomorrow";
   const diff = Math.round((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Yesterday";
-  if (diff < 7) return `${diff}d ago`;
+  if (diff > 0 && diff < 7) return `${diff}d ago`;
   return d.toLocaleDateString("en-US", { weekday: "short" });
 }
 
@@ -112,19 +118,33 @@ export async function fetchFieldTrafficability(): Promise<FieldTrafficabilityDat
     const daily = rawData.daily as Record<string, (number | string)[]>;
     const current = rawData.current as Record<string, number>;
     const times = (daily.time as string[]) || [];
-    const precip = (daily.precip_sum as number[]) || [];
+    const precip = (daily.precipitation_sum as number[]) || [];
     const precipProb = (daily.precipitation_probability_max as number[]) || [];
 
     const tempF = isValidNumber(current.temperature_2m) ? toF(current.temperature_2m) : null;
     const groundFrozen = tempF !== null && tempF <= 32;
+    const now = new Date();
 
-    // Build history from the past 7 days (last 7 entries before today)
-    const todayIdx = times.length - 2; // past_days=7 + forecast_days=2, so index -2 is today
+    // Find today's index by matching the date string
+    const todayStr = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric", month: "2-digit", day: "2-digit",
+    }).format(now);
+    let todayIdx = -1;
+    for (let i = 0; i < times.length; i++) {
+      if (times[i] === todayStr) { todayIdx = i; break; }
+    }
+    // Fallback: if today not found, assume second-to-last entry
+    if (todayIdx === -1) todayIdx = Math.max(0, times.length - 2);
+
     const history: TrafficDay[] = [];
     let totalRain7d = 0;
     let yesterdayRainIn = 0;
 
-    for (let i = 0; i < times.length - 2 && i < 7; i++) {
+    // Build history from past entries (everything before today)
+    const historyEnd = Math.min(todayIdx, 7);
+    const historyStart = Math.max(0, todayIdx - 7);
+    for (let i = historyStart; i < historyEnd; i++) {
       const precipIn = isValidNumber(precip[i]) ? mmToIn(precip[i]) : 0;
       totalRain7d += precipIn;
       history.push({
@@ -139,8 +159,8 @@ export async function fetchFieldTrafficability(): Promise<FieldTrafficabilityDat
       yesterdayRainIn = history[history.length - 1].precipIn;
     }
 
-    // Check tomorrow's rain probability (first forecast day)
-    const tomorrowIdx = times.length - 1;
+    // Check tomorrow's rain probability (entry after today)
+    const tomorrowIdx = todayIdx + 1 < times.length ? todayIdx + 1 : todayIdx;
     const tomorrowProb = isValidNumber(precipProb[tomorrowIdx]) ? precipProb[tomorrowIdx] : 0;
     const rainExpected = tomorrowProb >= 30;
 

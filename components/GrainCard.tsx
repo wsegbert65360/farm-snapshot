@@ -6,7 +6,8 @@ interface GrainCardProps {
 }
 
 export default function GrainCard({ data }: GrainCardProps) {
-  const isUnavailable = data.corn.price === 0 && data.corn.change === 0;
+  // Check the reason string for unavailability — price=0+change=0 is the error sentinel from grain.ts
+  const isUnavailable = data.corn.reason.includes("unavailable");
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
