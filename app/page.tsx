@@ -97,7 +97,8 @@ export default async function Home() {
       {/* END FEATURE: SunriseSunset */}
       {/* FEATURE: Radar — delete this block to remove */}
       <RadarCard
-        tiles={radarData.tiles}
+        mapTiles={radarData.mapTiles}
+        radarTiles={radarData.radarTiles}
         frameTime={radarData.frameTime}
         markerX={radarData.markerX}
         markerY={radarData.markerY}

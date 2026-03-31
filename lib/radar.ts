@@ -23,13 +23,19 @@ function latLonToTile(lat: number, lon: number, zoom: number): { x: number; y: n
 }
 
 export interface RadarData {
-  tiles: string[];
+  /** Map base tiles (CartoDB light) for geographic context */
+  mapTiles: string[];
+  /** Radar overlay tiles (RainViewer scheme 8 = transparent) */
+  radarTiles: string[];
   frameTime: number;
   /** Percentage (0-100) for marker left/top position within the 2x2 grid */
   markerX: number;
   markerY: number;
   error?: string;
 }
+
+// CartoDB subdomains for tile load balancing
+const CARTO_SUBS = ["a", "b", "c", "d"];
 
 export async function fetchRadar(): Promise<RadarData> {
   const { lat, lon } = config.weather;
@@ -41,14 +47,14 @@ export async function fetchRadar(): Promise<RadarData> {
     });
 
     if (!response.ok) {
-      return { tiles: [], frameTime: 0, markerX: 50, markerY: 50, error: "Radar unavailable" };
+      return { mapTiles: [], radarTiles: [], frameTime: 0, markerX: 50, markerY: 50, error: "Radar unavailable" };
     }
 
     const data: RainViewerResponse = await response.json();
 
     const pastFrames = data.radar?.past || [];
     if (pastFrames.length === 0) {
-      return { tiles: [], frameTime: 0, markerX: 50, markerY: 50, error: "No radar data available" };
+      return { mapTiles: [], radarTiles: [], frameTime: 0, markerX: 50, markerY: 50, error: "No radar data available" };
     }
 
     // Use the most recent past radar frame
@@ -70,23 +76,27 @@ export async function fetchRadar(): Promise<RadarData> {
       { dx: 0, dy: 0 },   // bottom-right
     ];
 
-    // RainViewer tile URL: {host}/{path}/{size}/{z}/{x}/{y}/{color_scheme}/{smooth}_{snow}.png
-    const tiles = offsets.map(({ dx, dy }) => {
-      return `${host}${basePath}/256/${zoom}/${center.x + dx}/${center.y + dy}/6/1_1.png`;
+    // Map base tiles — CartoDB Positron (light, clean labels)
+    const mapTiles = offsets.map(({ dx, dy }, i) => {
+      const sub = CARTO_SUBS[i % CARTO_SUBS.length];
+      return `https://${sub}.basemaps.cartocdn.com/light_all/${zoom}/${center.x + dx}/${center.y + dy}@2x.png`;
+    });
+
+    // Radar overlay tiles — color scheme 8 (transparent, designed for map overlays)
+    const radarTiles = offsets.map(({ dx, dy }) => {
+      return `${host}${basePath}/256/${zoom}/${center.x + dx}/${center.y + dy}/8/1_1.png`;
     });
 
     // Calculate exact sub-tile position for the farm marker
-    // The 2x2 grid covers tiles from (center.x-1, center.y-1) to (center.x, center.y)
-    // Map the fractional tile position into a 0-100% range within the grid
     const latRad = lat * Math.PI / 180;
     const fracX = ((lon + 180) / 360 * Math.pow(2, zoom)) - (center.x - 1);
     const fracY = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * Math.pow(2, zoom)) - (center.y - 1);
-    const markerX = (fracX / 2) * 100; // divide by 2 because grid is 2 tiles wide
+    const markerX = (fracX / 2) * 100;
     const markerY = (fracY / 2) * 100;
 
-    return { tiles, frameTime: latestFrame.time, markerX, markerY };
+    return { mapTiles, radarTiles, frameTime: latestFrame.time, markerX, markerY };
   } catch (e) {
     console.error("Radar API error:", e);
-    return { tiles: [], frameTime: 0, markerX: 50, markerY: 50, error: "Radar unavailable" };
+    return { mapTiles: [], radarTiles: [], frameTime: 0, markerX: 50, markerY: 50, error: "Radar unavailable" };
   }
 }
