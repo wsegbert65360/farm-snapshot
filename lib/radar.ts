@@ -25,6 +25,9 @@ function latLonToTile(lat: number, lon: number, zoom: number): { x: number; y: n
 export interface RadarData {
   tiles: string[];
   frameTime: number;
+  /** Percentage (0-100) for marker left/top position within the 2x2 grid */
+  markerX: number;
+  markerY: number;
   error?: string;
 }
 
@@ -38,14 +41,14 @@ export async function fetchRadar(): Promise<RadarData> {
     });
 
     if (!response.ok) {
-      return { tiles: [], frameTime: 0, error: "Radar unavailable" };
+      return { tiles: [], frameTime: 0, markerX: 50, markerY: 50, error: "Radar unavailable" };
     }
 
     const data: RainViewerResponse = await response.json();
 
     const pastFrames = data.radar?.past || [];
     if (pastFrames.length === 0) {
-      return { tiles: [], frameTime: 0, error: "No radar data available" };
+      return { tiles: [], frameTime: 0, markerX: 50, markerY: 50, error: "No radar data available" };
     }
 
     // Use the most recent past radar frame
@@ -72,9 +75,18 @@ export async function fetchRadar(): Promise<RadarData> {
       return `${host}${basePath}/256/${zoom}/${center.x + dx}/${center.y + dy}/6/1_1.png`;
     });
 
-    return { tiles, frameTime: latestFrame.time };
+    // Calculate exact sub-tile position for the farm marker
+    // The 2x2 grid covers tiles from (center.x-1, center.y-1) to (center.x, center.y)
+    // Map the fractional tile position into a 0-100% range within the grid
+    const latRad = lat * Math.PI / 180;
+    const fracX = ((lon + 180) / 360 * Math.pow(2, zoom)) - (center.x - 1);
+    const fracY = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * Math.pow(2, zoom)) - (center.y - 1);
+    const markerX = (fracX / 2) * 100; // divide by 2 because grid is 2 tiles wide
+    const markerY = (fracY / 2) * 100;
+
+    return { tiles, frameTime: latestFrame.time, markerX, markerY };
   } catch (e) {
     console.error("Radar API error:", e);
-    return { tiles: [], frameTime: 0, error: "Radar unavailable" };
+    return { tiles: [], frameTime: 0, markerX: 50, markerY: 50, error: "Radar unavailable" };
   }
 }

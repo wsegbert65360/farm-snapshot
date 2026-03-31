@@ -99,6 +99,8 @@ export default async function Home() {
       <RadarCard
         tiles={radarData.tiles}
         frameTime={radarData.frameTime}
+        markerX={radarData.markerX}
+        markerY={radarData.markerY}
         error={radarData.error}
       />
       {/* END FEATURE: Radar */}

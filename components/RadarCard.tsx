@@ -3,10 +3,12 @@ import { config } from "@/lib/config";
 interface RadarCardProps {
   tiles: string[];
   frameTime: number;
+  markerX: number;
+  markerY: number;
   error?: string;
 }
 
-export default function RadarCard({ tiles, frameTime, error }: RadarCardProps) {
+export default function RadarCard({ tiles, frameTime, markerX, markerY, error }: RadarCardProps) {
   if (error || tiles.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
@@ -34,16 +36,36 @@ export default function RadarCard({ tiles, frameTime, error }: RadarCardProps) {
           {timeStr}
         </span>
       </div>
-      <div className="grid grid-cols-2 w-full aspect-square rounded-lg overflow-hidden border border-slate-100">
-        {tiles.map((url, i) => (
-          <img
-            key={i}
-            src={url}
-            alt={`Radar tile ${i + 1}`}
-            className="w-full h-full block"
-            loading="eager"
-          />
-        ))}
+      <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-slate-100">
+        {/* 2x2 tile grid */}
+        <div className="grid grid-cols-2 w-full h-full">
+          {tiles.map((url, i) => (
+            <img
+              key={i}
+              src={url}
+              alt={`Radar tile ${i + 1}`}
+              className="w-full h-full block"
+              loading="eager"
+            />
+          ))}
+        </div>
+
+        {/* Farm center marker */}
+        <div
+          className="absolute z-10"
+          style={{ left: `${markerX}%`, top: `${markerY}%`, transform: "translate(-50%, -50%)" }}
+        >
+          {/* Outer pulse ring */}
+          <div className="absolute -top-[6px] -left-[6px] w-5 h-5 rounded-full bg-red-500/20 animate-ping" />
+          {/* Inner solid dot */}
+          <div className="relative w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white shadow-md" />
+          {/* Farm label */}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0.5 whitespace-nowrap">
+            <span className="text-[9px] font-bold text-white bg-black/60 px-1 rounded leading-none">
+              FARM
+            </span>
+          </div>
+        </div>
       </div>
       <p className="text-[10px] text-slate-400 mt-1.5 text-center">
         ~150 mi radius &middot; RainViewer
