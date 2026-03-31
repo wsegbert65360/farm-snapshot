@@ -31,6 +31,9 @@ import { fetchFrostAlert } from "@/lib/frost-alert";
 // FEATURE: Barometer — delete this import + render block to remove
 import BarometerCard from "@/components/BarometerCard";
 import { fetchBarometer } from "@/lib/barometer";
+// FEATURE: SprayDayPlanner — delete this import + render block to remove
+import SprayDayPlannerCard from "@/components/SprayDayPlannerCard";
+import { fetchSprayDayPlanner } from "@/lib/spray-day-planner";
 import { config } from "@/lib/config";
 
 export const revalidate = 900;
@@ -86,7 +89,8 @@ export default async function Home() {
   // FEATURE: GrowingDegreeDays — delete this fetchGDD from Promise.all to remove
   // FEATURE: FrostAlert — delete this fetchFrostAlert from Promise.all to remove
   // FEATURE: Barometer — delete this fetchBarometer from Promise.all to remove
-  const [weather, grainData, forecast, newsData, sunriseSunsetData, radarData, soilTempData, dewPointData, gddData, frostData, barometerData] = await Promise.all([
+  // FEATURE: SprayDayPlanner — delete this fetchSprayDayPlanner from Promise.all to remove
+  const [weather, grainData, forecast, newsData, sunriseSunsetData, radarData, soilTempData, dewPointData, gddData, frostData, barometerData, sprayPlannerData] = await Promise.all([
     fetchCurrentWeather(),
     fetchGrainPrices(),
     fetchDailyForecast(10),
@@ -98,6 +102,7 @@ export default async function Home() {
     fetchGDD(),
     fetchFrostAlert(),
     fetchBarometer(),
+    fetchSprayDayPlanner(),
   ]);
 
   const [weatherData, sprayData] = await Promise.all([
@@ -176,6 +181,14 @@ export default async function Home() {
         error={barometerData.error}
       />
       {/* END FEATURE: Barometer */}
+      {/* FEATURE: SprayDayPlanner — delete this block to remove */}
+      <SprayDayPlannerCard
+        days={sprayPlannerData.days}
+        goodDaysCount={sprayPlannerData.goodDaysCount}
+        totalDays={sprayPlannerData.totalDays}
+        error={sprayPlannerData.error}
+      />
+      {/* END FEATURE: SprayDayPlanner */}
       <ForecastCard days={forecast.days} updatedAt={new Date().toISOString()} />
       <NewsCard data={newsData} />
       {hasAnyError && (
