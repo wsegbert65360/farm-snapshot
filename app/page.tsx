@@ -4,11 +4,15 @@ import SprayCard from "@/components/SprayCard";
 import ForecastCard from "@/components/ForecastCard";
 import NewsCard from "@/components/NewsCard";
 import UpdateButton from "@/components/UpdateButton";
+// FEATURE: SunriseSunset — delete this import + render block to remove
+import SunriseSunsetCard from "@/components/SunriseSunsetCard";
 import { fetchCurrentWeather, fetchDailyForecast } from "@/lib/weather";
 import { fetchRainfall } from "@/lib/rainfall";
 import { calculateSprayDecision } from "@/lib/spray";
 import { fetchGrainPrices } from "@/lib/grain";
 import { fetchFarmNews } from "@/lib/news";
+// FEATURE: SunriseSunset — delete this import + render block to remove
+import { fetchSunriseSunset } from "@/lib/sunrise-sunset";
 import { config } from "@/lib/config";
 
 export const revalidate = 900;
@@ -57,11 +61,13 @@ function getSprayData(weather: WeatherData) {
 }
 
 export default async function Home() {
-  const [weather, grainData, forecast, newsData] = await Promise.all([
+  // FEATURE: SunriseSunset — delete this fetchSunriseSunset from Promise.all to remove
+  const [weather, grainData, forecast, newsData, sunriseSunsetData] = await Promise.all([
     fetchCurrentWeather(),
     fetchGrainPrices(),
     fetchDailyForecast(10),
     fetchFarmNews(),
+    fetchSunriseSunset(),
   ]);
 
   const [weatherData, sprayData] = await Promise.all([
@@ -76,6 +82,14 @@ export default async function Home() {
       <GrainCard data={grainData} />
       <WeatherCard data={weatherData} />
       <SprayCard data={sprayData} />
+      {/* FEATURE: SunriseSunset — delete this block to remove */}
+      <SunriseSunsetCard
+        sunrise={sunriseSunsetData.sunrise}
+        sunset={sunriseSunsetData.sunset}
+        daylightMinutes={sunriseSunsetData.daylightMinutes}
+        error={sunriseSunsetData.error}
+      />
+      {/* END FEATURE: SunriseSunset */}
       <ForecastCard days={forecast.days} updatedAt={new Date().toISOString()} />
       <NewsCard data={newsData} />
       {hasAnyError && (
