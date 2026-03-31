@@ -13,6 +13,9 @@ import { fetchGrainPrices } from "@/lib/grain";
 import { fetchFarmNews } from "@/lib/news";
 // FEATURE: SunriseSunset — delete this import + render block to remove
 import { fetchSunriseSunset } from "@/lib/sunrise-sunset";
+// FEATURE: Radar — delete this import + render block to remove
+import RadarCard from "@/components/RadarCard";
+import { fetchRadar } from "@/lib/radar";
 import { config } from "@/lib/config";
 
 export const revalidate = 900;
@@ -62,12 +65,14 @@ function getSprayData(weather: WeatherData) {
 
 export default async function Home() {
   // FEATURE: SunriseSunset — delete this fetchSunriseSunset from Promise.all to remove
-  const [weather, grainData, forecast, newsData, sunriseSunsetData] = await Promise.all([
+  // FEATURE: Radar — delete this fetchRadar from Promise.all to remove
+  const [weather, grainData, forecast, newsData, sunriseSunsetData, radarData] = await Promise.all([
     fetchCurrentWeather(),
     fetchGrainPrices(),
     fetchDailyForecast(10),
     fetchFarmNews(),
     fetchSunriseSunset(),
+    fetchRadar(),
   ]);
 
   const [weatherData, sprayData] = await Promise.all([
@@ -90,6 +95,13 @@ export default async function Home() {
         error={sunriseSunsetData.error}
       />
       {/* END FEATURE: SunriseSunset */}
+      {/* FEATURE: Radar — delete this block to remove */}
+      <RadarCard
+        tiles={radarData.tiles}
+        frameTime={radarData.frameTime}
+        error={radarData.error}
+      />
+      {/* END FEATURE: Radar */}
       <ForecastCard days={forecast.days} updatedAt={new Date().toISOString()} />
       <NewsCard data={newsData} />
       {hasAnyError && (
