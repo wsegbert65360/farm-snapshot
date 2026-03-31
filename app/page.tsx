@@ -43,6 +43,9 @@ import { fetchRainTimeline } from "@/lib/rain-timeline";
 // FEATURE: FieldTrafficability — delete this import + render block to remove
 import FieldTrafficabilityCard from "@/components/FieldTrafficabilityCard";
 import { fetchFieldTrafficability } from "@/lib/field-trafficability";
+// FEATURE: CropMaturity — delete this import + render block to remove
+import CropMaturityCard from "@/components/CropMaturityCard";
+import { fetchCropMaturity } from "@/lib/crop-maturity";
 import { config } from "@/lib/config";
 
 export const revalidate = 900;
@@ -102,7 +105,8 @@ export default async function Home() {
   // FEATURE: DryingConditions — delete this fetchDryingConditions from Promise.all to remove
   // FEATURE: RainTimeline — delete this fetchRainTimeline from Promise.all to remove
   // FEATURE: FieldTrafficability — delete this fetchFieldTrafficability from Promise.all to remove
-  const [weather, grainData, forecast, newsData, sunriseSunsetData, radarData, soilTempData, dewPointData, gddData, frostData, barometerData, sprayPlannerData, dryingData, rainTimelineData, trafficData] = await Promise.all([
+  // FEATURE: CropMaturity — delete this fetchCropMaturity from Promise.all to remove
+  const [weather, grainData, forecast, newsData, sunriseSunsetData, radarData, soilTempData, dewPointData, gddData, frostData, barometerData, sprayPlannerData, dryingData, rainTimelineData, trafficData, cropMaturityData] = await Promise.all([
     fetchCurrentWeather(),
     fetchGrainPrices(),
     fetchDailyForecast(10),
@@ -118,6 +122,7 @@ fetchGDD(),
  fetchDryingConditions(),
  fetchRainTimeline(),
  fetchFieldTrafficability(),
+ fetchCropMaturity(),
   ]);
 
   const [weatherData, sprayData] = await Promise.all([
@@ -240,6 +245,12 @@ fetchGDD(),
         error={trafficData.error}
       />
       {/* END FEATURE: FieldTrafficability */}
+      {/* FEATURE: CropMaturity — delete this block to remove */}
+      <CropMaturityCard
+        crops={cropMaturityData.crops}
+        error={cropMaturityData.error}
+      />
+      {/* END FEATURE: CropMaturity */}
       <ForecastCard days={forecast.days} updatedAt={new Date().toISOString()} />
       <NewsCard data={newsData} />
       {hasAnyError && (
