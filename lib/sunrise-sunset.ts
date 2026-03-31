@@ -39,14 +39,17 @@ export async function fetchSunriseSunset(): Promise<SunriseSunsetData> {
       return { sunrise: "--:--", sunset: "--:--", daylightMinutes: 0, error: "Invalid response", updatedAt: new Date().toISOString() };
     }
 
-    // Format ISO time to local h:mm AM/PM
+    // Open-Meteo returns times already in the requested timezone (e.g. "2026-03-30T07:01")
+    // Extract HH:MM directly and format as h:mm AM/PM — avoid Date parsing which
+    // would re-interpret the string as UTC on the server and double-shift the timezone.
     const formatTime = (iso: string) => {
-      const date = new Date(iso);
-      return date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        timeZone: timezone,
-      });
+      const match = iso.match(/T(\d{2}):(\d{2})/);
+      if (!match) return "--:--";
+      const h = parseInt(match[1], 10);
+      const m = match[2];
+      const ampm = h >= 12 ? "PM" : "AM";
+      const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+      return `${hour12}:${m} ${ampm}`;
     };
 
     const daylightMinutes = typeof daylightSec === "number" ? Math.round(daylightSec / 60) : 0;

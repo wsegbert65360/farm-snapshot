@@ -67,8 +67,9 @@ export async function fetchRadar(): Promise<RadarData> {
       { dx: 0, dy: 0 },   // bottom-right
     ];
 
+    // RainViewer tile URL: {host}/{path}/{size}/{z}/{x}/{y}/{color_scheme}/{smooth}_{snow}.png
     const tiles = offsets.map(({ dx, dy }) => {
-      return `${host}${basePath}/${zoom}/${center.x + dx}/${center.y + dy}/6/1_1.png`;
+      return `${host}${basePath}/256/${zoom}/${center.x + dx}/${center.y + dy}/6/1_1.png`;
     });
 
     return { tiles, frameTime: latestFrame.time };
