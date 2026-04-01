@@ -43,8 +43,8 @@ export async function fetchRainfall(): Promise<{
 
   const fetchRange = async (start: string, end?: string): Promise<number | null> => {
     const url = end 
-      ? `${baseUrl}/api/rain?field_id=${fieldId}&start_date=${start}&end_date=${end}`
-      : `${baseUrl}/api/rain?field_id=${fieldId}&date=${start}`;
+      ? `${baseUrl}/rain?field_id=${fieldId}&start_date=${start}&end_date=${end}`
+      : `${baseUrl}/rain?field_id=${fieldId}&date=${start}`;
 
     try {
       const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
