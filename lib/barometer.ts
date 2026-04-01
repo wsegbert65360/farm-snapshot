@@ -67,17 +67,33 @@ export async function fetchBarometer(): Promise<BarometerData> {
       return { pressureInHg: null, pressureHpa: null, trend: "Steady", changeHpa: null, forecast: "", error: "Invalid response", updatedAt: new Date().toISOString() };
     }
 
-    // Current pressure (last reading)
-    const currentHpa = hourly.surface_pressure[hourly.surface_pressure.length - 1];
-    if (!isValidNumber(currentHpa)) {
+    // Find the current hour index — don't just use the last element because
+    // Open-Meteo returns the full 16-day forecast which has nulls at the end.
+    const now = new Date();
+    const currentHourStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}T${String(now.getHours()).padStart(2,"0")}:00`;
+    let currentIdx = hourly.time.indexOf(currentHourStr);
+    if (currentIdx === -1 || !isValidNumber(hourly.surface_pressure[currentIdx])) {
+      // Fallback: walk backwards from the end to find last non-null
+      currentIdx = hourly.surface_pressure.length - 1;
+      while (currentIdx >= 0 && !isValidNumber(hourly.surface_pressure[currentIdx])) currentIdx--;
+    }
+    if (currentIdx < 0 || !isValidNumber(hourly.surface_pressure[currentIdx])) {
       return { pressureInHg: null, pressureHpa: null, trend: "Steady", changeHpa: null, forecast: "", error: "Invalid response", updatedAt: new Date().toISOString() };
     }
 
-    const pressureHpa = currentHpa as number;
+    const pressureHpa = hourly.surface_pressure[currentIdx] as number;
     const pressureInHg = hpaToInHg(pressureHpa);
 
-    // Calculate change from 12 hours ago (or oldest available)
-    const oldestHpa = hourly.surface_pressure[0];
+    // Find index 12 hours back for trend calculation
+    const pastHourStr = (() => {
+      const d = new Date(now);
+      d.setHours(d.getHours() - 12);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}:00`;
+    })();
+    let pastIdx = hourly.time.indexOf(pastHourStr);
+    if (pastIdx === -1) pastIdx = 0;
+
+    const oldestHpa = hourly.surface_pressure[pastIdx];
     const changeHpa = isValidNumber(oldestHpa) ? Math.round((pressureHpa - (oldestHpa as number)) * 10) / 10 : null;
 
     const trend = changeHpa !== null ? getTrend(changeHpa) : "Steady";
