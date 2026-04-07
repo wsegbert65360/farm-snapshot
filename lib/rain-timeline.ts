@@ -81,7 +81,7 @@ export async function fetchRainTimeline(): Promise<RainTimelineData> {
 
     const rawData = await response.json();
 
-    if (!isValidObject(rawData) || !Array.isArray(rawData.hourly) || !isValidObject(rawData.hourly)) {
+    if (!isValidObject(rawData) || !isValidObject(rawData.hourly)) {
       return { hours: [], totalPrecipIn: 0, dryStreak: 0, rainSoon: false, error: "Invalid response", updatedAt: new Date().toISOString() };
     }
 
