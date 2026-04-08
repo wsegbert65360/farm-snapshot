@@ -50,6 +50,8 @@ export async function fetchCurrentWeather(): Promise<{
 
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,wind_speed_10m,wind_gusts_10m&hourly=precipitation_probability,precipitation,wind_speed_10m`;
 
+  console.log("[Weather] Fetching current weather from Open-Meteo...");
+
   try {
     const response = await fetch(url, {
       headers: {
@@ -58,7 +60,10 @@ export async function fetchCurrentWeather(): Promise<{
       signal: AbortSignal.timeout(10000),
     });
 
+    console.log("[Weather] Response status:", response.status, response.statusText);
+
     if (!response.ok) {
+      console.error("[Weather] API returned error:", response.status, response.statusText);
       return { tempF: null, windMph: null, gustMph: null, isRainingNow: null, rainPredicted: null, error: "Weather API unavailable" };
     }
 

@@ -14,6 +14,20 @@ export interface RainHour {
   isNow: boolean;
 }
 
+// Cache configuration
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes - weather data doesn't change that fast
+
+type CachedData = {
+  data: RainTimelineData;
+  expiresAt: number;
+};
+
+// In-memory cache (per-process, resets on server restart)
+let cache: CachedData | null = null;
+
+// Request coalescing: track in-flight requests
+let inFlightPromise: Promise<RainTimelineData> | null = null;
+
 export interface RainTimelineData {
   /** Hourly entries for the next 24 hours */
   hours: RainHour[];
@@ -64,10 +78,17 @@ function findNowIndex(times: string[]): number {
   return 0;
 }
 
-export async function fetchRainTimeline(): Promise<RainTimelineData> {
+function isCacheValid(): boolean {
+  if (!cache) return false;
+  return Date.now() < cache.expiresAt;
+}
+
+async function fetchFromAPI(): Promise<RainTimelineData> {
   const { lat, lon, timezone } = config.weather;
 
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation_probability,precipitation&forecast_hours=24&timezone=${encodeURIComponent(timezone)}`;
+
+  console.log('[RainTimeline] Fetching URL:', url);
 
   try {
     const response = await fetch(url, {
@@ -75,7 +96,23 @@ export async function fetchRainTimeline(): Promise<RainTimelineData> {
       signal: AbortSignal.timeout(10000),
     });
 
+    console.log('[RainTimeline] Response status:', response.status, 'OK:', response.ok);
+
     if (!response.ok) {
+      console.error('[RainTimeline] API returned non-OK status:', response.status);
+      
+      // Distinguish rate limiting (429) from generic failures
+      if (response.status === 429) {
+        return { 
+          hours: [], 
+          totalPrecipIn: 0, 
+          dryStreak: 0, 
+          rainSoon: false, 
+          error: "Rate limited - try again later", 
+          updatedAt: new Date().toISOString() 
+        };
+      }
+      
       return { hours: [], totalPrecipIn: 0, dryStreak: 0, rainSoon: false, error: "API unavailable", updatedAt: new Date().toISOString() };
     }
 
@@ -135,7 +172,49 @@ export async function fetchRainTimeline(): Promise<RainTimelineData> {
       updatedAt: new Date().toISOString(),
     };
   } catch (e) {
-    console.error("Rain timeline API error:", e);
+    console.error("[RainTimeline] Exception:", e);
+    if (e instanceof Error) {
+      console.error("[RainTimeline] Error name:", e.name, "message:", e.message);
+    }
     return { hours: [], totalPrecipIn: 0, dryStreak: 0, rainSoon: false, error: "API unavailable", updatedAt: new Date().toISOString() };
   }
+}
+
+export async function fetchRainTimeline(): Promise<RainTimelineData> {
+  // Check cache first
+  if (isCacheValid()) {
+    console.log('[RainTimeline] Using cached data (expires in', Math.round((cache!.expiresAt - Date.now()) / 1000), 'seconds)');
+    return cache!.data;
+  }
+
+  // If a request is already in-flight, return that promise (coalesce)
+  if (inFlightPromise) {
+    console.log('[RainTimeline] Using in-flight request');
+    return inFlightPromise;
+  }
+
+  // Start a new fetch request
+  inFlightPromise = fetchFromAPI().then((data) => {
+    // Cache successful responses (or responses with errors we want to cache)
+    // Don't cache if we got a rate limit error - let the next request retry sooner
+    if (!data.error || data.error === "API unavailable") {
+      cache = {
+        data,
+        expiresAt: Date.now() + CACHE_TTL_MS,
+      };
+    } else if (data.error === "Rate limited - try again later") {
+      // For rate limiting, cache for a shorter time to reduce retry pressure
+      cache = {
+        data,
+        expiresAt: Date.now() + (60 * 1000), // 1 minute
+      };
+    }
+    
+    return data;
+  }).finally(() => {
+    // Clear in-flight marker
+    inFlightPromise = null;
+  });
+
+  return inFlightPromise;
 }

@@ -62,12 +62,18 @@ async function fetchFuturesPrice(symbol: string): Promise<{
 export async function fetchGrainPrices(): Promise<GrainData> {
   const { priceDropThreshold } = config.grain;
 
+  console.log("[Grain] Starting grain price fetch...");
+
   const [cornData, soybeansData] = await Promise.all([
     fetchFuturesPrice(SYMBOLS.corn),
     fetchFuturesPrice(SYMBOLS.soybeans),
   ]);
 
+  console.log("[Grain] Corn data:", cornData ? "received" : "null");
+  console.log("[Grain] Soybeans data:", soybeansData ? "received" : "null");
+
   if (!cornData || !soybeansData) {
+    console.error("[Grain] Missing data - corn:", cornData, "soybeans:", soybeansData);
     return {
       corn: {
         price: 0,
@@ -86,6 +92,8 @@ export async function fetchGrainPrices(): Promise<GrainData> {
       updatedAt: new Date().toISOString(),
     };
   }
+
+  console.log("[Grain] Successfully fetched both commodities");
 
   // Corn: Yahoo returns cents per bushel — convert to $/bushel
   const cornPrice = cornData.price / 100;
