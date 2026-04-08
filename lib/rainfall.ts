@@ -7,7 +7,7 @@ export async function fetchRainfall(): Promise<{
   error?: string;
 }> {
   const { apiUrl } = config.rainfall;
-  const { lat, lon } = config.weather;
+  const { lat, lon, timezone } = config.weather;
 
   if (!lat || !lon) {
     return { rain1d: null, rain3d: null, rain7d: null };
@@ -36,10 +36,24 @@ export async function fetchRainfall(): Promise<{
       return { rain1d: 0, rain3d: 0, rain7d: 0 };
     }
 
-    // Aggregate from daily breakdown (per API contract)
-    const rain1d = dates.slice(-1).reduce((s, d) => s + (Number(breakdown[d]) || 0), 0);
-    const rain3d = dates.slice(-3).reduce((s, d) => s + (Number(breakdown[d]) || 0), 0);
-    const rain7d = Number(data.rainfall) || dates.reduce((s, d) => s + (Number(breakdown[d]) || 0), 0);
+    // Get today's date in the farm's timezone to exclude future forecast dates
+    const todayStr = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    // Format from MM/DD/YYYY to YYYY-MM-DD
+    const [month, day, year] = todayStr.split("/");
+    const todayYMD = `${year}-${month}-${day}`;
+
+    // Filter to only include historical data (dates <= today)
+    const historicalDates = dates.filter((d) => d <= todayYMD);
+
+    // Aggregate from historical dates
+    const rain1d = breakdown[todayYMD] ? Number(breakdown[todayYMD]) : 0;
+    const rain3d = historicalDates.slice(-3).reduce((s, d) => s + (Number(breakdown[d]) || 0), 0);
+    const rain7d = historicalDates.reduce((s, d) => s + (Number(breakdown[d]) || 0), 0);
 
     return {
       rain1d: Math.round(rain1d * 1000) / 1000,
